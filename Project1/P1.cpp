@@ -25,6 +25,8 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			qNo = 2;
 		else if (wParam == 0x33)
 			qNo = 3;
+		else if (wParam == 0x34)
+			qNo = 4;
 		break;
 
 	default:
@@ -68,37 +70,28 @@ bool initPixelFormat(HDC hdc)
 //--------------------------------------------------------------------
 
 void pahang() {
-	glClearColor(0, 0.0, 0.0, 0);
+	glClearColor(0, 1, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
-
-	glLineWidth(2);
-	glBegin(GL_LINE_LOOP);
-	glColor3f(0, 1, 0);
-	glVertex2f(-0.5, -0.5);
-	glVertex2f(-0.5, 0.5);
-	glVertex2f(0.5, 0.5);
-	glVertex2f(0.5, -0.5);
-	glEnd();
 
 	glBegin(GL_QUADS);
 	glColor3f(1, 1, 1);
-	glVertex2f(-0.5, 0);
-	glVertex2f(-0.5, 0.5);
-	glVertex2f(0.5, 0.5);
-	glVertex2f(0.5, 0);
+	glVertex2f(-0.8, 0);
+	glVertex2f(-0.8, 0.5);
+	glVertex2f(0.8, 0.5);
+	glVertex2f(0.8, 0);
 	glEnd();
 
 	glBegin(GL_QUADS);
 	glColor3f(0, 0, 0);
-	glVertex2f(-0.5, -0.5);
-	glVertex2f(-0.5, 0);
-	glVertex2f(0.5, 0);
-	glVertex2f(0.5, -0.5);
+	glVertex2f(-0.8, -0.5);
+	glVertex2f(-0.8, 0);
+	glVertex2f(0.8, 0);
+	glVertex2f(0.8, -0.5);
 	glEnd();
 }
 
 void negeriSembilan() {
-	glClearColor(0, 0, 1, 0);
+	glClearColor(0, 1, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	//Background
@@ -133,9 +126,10 @@ void negeriSembilan() {
 }
 
 void england() {
-	glClearColor(0, 0, 1, 0);
+	glClearColor(0, 1, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	//Red
 	glBegin(GL_QUADS);
 	glColor3f(0.6, 0, 0);
 	glVertex2f(-0.8, -0.1);
@@ -152,23 +146,24 @@ void england() {
 	glVertex2f(-0.08, 0.5);
 	glEnd();
 
+	//White
 	glBegin(GL_QUADS);
 	glColor3f(1, 1, 1);
 	glVertex2f(-0.8, 0.1);
-	glColor4f(0, 0, 0, 0.8);
+	glColor4f(0.6, 0.6, 0.6, 0);
 	glVertex2f(-0.8, 0.5);
 	glColor3f(1, 1, 1);
 	glVertex2f(-0.08, 0.5);
-	glColor3f(1, 1, 1);
 	glVertex2f(-0.08, 0.1);
 	glEnd();
 
+	//White
 	glBegin(GL_QUADS);
 	glColor3f(1, 1, 1);
 	glVertex2f(0.08, 0.1);
 	glColor3f(1, 1, 1);
 	glVertex2f(0.08, 0.5);
-	glColor4f(0, 0, 0, 0.8);
+	glColor4f(0.6, 0.6, 0.6, 0);
 	glVertex2f(0.8, 0.5);
 	glColor3f(1, 1, 1);
 	glVertex2f(0.8, 0.1);
@@ -177,7 +172,7 @@ void england() {
 	glBegin(GL_QUADS);
 	glColor3f(1, 1, 1);
 	glVertex2f(-0.8, -0.1);
-	glColor4f(0, 0, 0, 0.8);
+	glColor4f(0.6, 0.6, 0.6, 0);
 	glVertex2f(-0.8, -0.5);
 	glColor3f(1, 1, 1);
 	glVertex2f(-0.08, -0.5);
@@ -190,10 +185,49 @@ void england() {
 	glVertex2f(0.08, -0.1);
 	glColor3f(1, 1, 1);
 	glVertex2f(0.08, -0.5);
-	glColor4f(0, 0, 0, 0.8);
+	glColor4f(0.6, 0.6, 0.6, 0);
 	glVertex2f(0.8, -0.5);
 	glColor3f(1, 1, 1);
 	glVertex2f(0.8, -0.1);
+	glEnd();
+}
+
+void scotland() {
+	glClearColor(0, 1, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glBegin(GL_QUADS);
+	glColor3f(1,1,1);
+	glVertex2f(-0.8, -0.5);
+	glVertex2f(-0.8, 0.5);
+	glVertex2f(0.8, 0.5);
+	glVertex2f(0.8, -0.5);
+	glEnd();
+
+
+	glColor3f(0.2, 0.4, 1);
+	glBegin(GL_TRIANGLES);
+	glVertex2f(0, 0.1);
+	glVertex2f(-0.7, 0.5);
+	glVertex2f(0.7, 0.5);
+	glEnd();
+
+	glBegin(GL_TRIANGLES);
+	glVertex2f(0, -0.1);
+	glVertex2f(-0.7, -0.5);
+	glVertex2f(0.7, -0.5);
+	glEnd();
+
+	glBegin(GL_TRIANGLES);
+	glVertex2f(0.2, 0);
+	glVertex2f(0.8, 0.35);
+	glVertex2f(0.8, -0.35);
+	glEnd();
+
+	glBegin(GL_TRIANGLES);
+	glVertex2f(-0.2, 0);
+	glVertex2f(-0.8, 0.35);
+	glVertex2f(-0.8, -0.35);
 	glEnd();
 }
 
@@ -212,6 +246,9 @@ void display()
 		break;
 	case 3:
 		england();
+		break;
+	case 4:
+		scotland();
 		break;
 	}
 
