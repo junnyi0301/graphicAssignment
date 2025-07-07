@@ -18,5 +18,11 @@
     <ClCompile Include="P1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="P2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Template.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

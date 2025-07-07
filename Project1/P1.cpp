@@ -1,12 +1,20 @@
 
 #include <Windows.h>
 #include <gl/GL.h>
+#include <math.h>
 
 #pragma comment (lib, "OpenGL32.lib")
 
 #define WINDOW_TITLE "OpenGL Window"
 
 int qNo = 1;
+bool dead = false;
+float x = 0, y = 0;		//origin or circle
+float r = 1;			//radius
+float x2 = 0, y2 = 0;	//point on circle
+float angle = 0;		//angle
+float PI = 3.142;		//PI
+int noOfTri = 30;		//Number of triangle
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -27,6 +35,20 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			qNo = 3;
 		else if (wParam == 0x34)
 			qNo = 4;
+		else if (wParam == 0x35)
+			qNo = 5;
+		else if (wParam == 0x36)
+			qNo = 6;
+		else if (wParam == 0x37)
+			qNo = 7;
+		else if (wParam == 0x38)
+			if (dead == false) {
+				dead = true;
+			}
+			else {
+				dead = false;
+			}
+			
 		break;
 
 	default:
@@ -95,21 +117,17 @@ void negeriSembilan() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	//Background
-	glBegin(GL_QUADS);
+	glBegin(GL_QUAD_STRIP);
 	glColor3f(1, 1, 0);
 	glVertex2f(-0.8, -0.5);
 	glVertex2f(-0.8, 0);
-	glVertex2f(0, 0);
-	glVertex2f(0, -0.5);
-	glEnd();
-
-	glBegin(GL_QUADS);
 	glVertex2f(0, -0.5);
 	glVertex2f(0, 0.5);
-	glVertex2f(0.8, 0.5);
 	glVertex2f(0.8, -0.5);
+	glVertex2f(0.8, 0.5);
 	glEnd();
 
+	//Logo
 	glBegin(GL_TRIANGLES);
 	glColor3f(0, 0, 0);
 	glVertex2f(-0.8, 0);
@@ -204,7 +222,6 @@ void scotland() {
 	glVertex2f(0.8, -0.5);
 	glEnd();
 
-
 	glColor3f(0.2, 0.4, 1);
 	glBegin(GL_TRIANGLES);
 	glVertex2f(0, 0.1);
@@ -231,6 +248,149 @@ void scotland() {
 	glEnd();
 }
 
+void japan() {
+	glClearColor(0, 1, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glBegin(GL_QUADS);
+	glColor3f(1, 1, 1);
+	glVertex2f(-0.8, -0.5);
+	glVertex2f(-0.8, 0.5);
+	glVertex2f(0.8, 0.5);
+	glVertex2f(0.8, -0.5);
+	glEnd();
+
+	glColor3f(1, 0, 0);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(x,y);
+	for (angle = 0; angle <= 2 * PI; angle += (2 * PI) / noOfTri) {
+		x2 = x + (r-0.8) * cos(angle);
+		y2 = y + (r-0.8) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+}
+
+void smile() {
+	glClearColor(0, 1, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glColor3f(1, 1, 0);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(x, y);
+	for (angle = 0; angle <= 2 * PI; angle += (2 * PI) / noOfTri) {
+		x2 = x + (r-0.5) * cos(angle);
+		y2 = y + (r-0.5) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+
+	glColor3f(0, 0, 0);
+	glPointSize(8);
+	glBegin(GL_POINTS);
+	glVertex2f(-0.2, 0.2);
+	glVertex2f(0.2, 0.2);
+	glEnd();
+
+	glColor3f(1, 0, 0);
+	glLineWidth(3);
+	glBegin(GL_LINE_STRIP);
+	//glVertex2f(x, y-0.1);
+	for (angle = 0; angle <= PI; angle += PI / noOfTri) {
+		x2 = x - (r - 0.85) * cos(angle);
+		y2 = y-0.1 - (r - 0.85) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+}
+
+void emoji() {
+	glClearColor(0, 1, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glColor3f(1, 1, 0);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(x,y);
+	for (angle = 0; angle <= 2 * PI; angle += (2 * PI) / noOfTri) {
+		x2 = x + (r-0.5) * cos(angle);
+		y2 = y + (r - 0.5) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+
+	//Eyes
+	glLineWidth(7);
+	glColor3f(0, 0, 0);
+	glBegin(GL_LINES);
+	glVertex2f(-0.2, 0.2);
+	glVertex2f(-0.1, 0.1);
+	glEnd();
+
+	glBegin(GL_LINES);
+	glVertex2f(-0.1, 0.2);
+	glVertex2f(-0.2, 0.1);
+	glEnd();
+
+	glBegin(GL_LINES);
+	glVertex2f(0.2, 0.2);
+	glVertex2f(0.1, 0.1);
+	glEnd();
+
+	glBegin(GL_LINES);
+	glVertex2f(0.1, 0.2);
+	glVertex2f(0.2, 0.1);
+	glEnd();
+
+	//Nose
+	glColor3f(1, 0, 0);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(x, y-0.05);
+	for (angle = 0; angle <= 2 * PI; angle += (2 * PI) / noOfTri) {
+		x2 = x + (r - 0.95) * cos(angle);
+		y2 = y-0.05 + (r - 0.95) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+
+	//Halo
+	glColor3f(0, 1, 1);
+	glBegin(GL_LINE_STRIP);
+	for (angle = 0; angle <= 2 * PI; angle += (2 * PI) / noOfTri) {
+		x2 = x + (r - 0.6) * cos(angle);
+		y2 = y + 0.45 + (r - 0.9) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+
+	//Mouth
+	glColor3f(1,0,0);
+	glLineWidth(8);
+	glBegin(GL_LINE_STRIP);
+	for (angle = 0; angle <= PI; angle += PI / noOfTri) {
+		x2 = x - (r - 0.79) * cos(angle);
+		y2 = y-0.1 - (r - 0.87) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+
+	glBegin(GL_TRIANGLE_FAN);
+	for (angle = 0; angle <= 2*PI; angle += (2*PI) / noOfTri) {
+		x2 = x+0.15 - (r - 0.95) * cos(angle);
+		y2 = y-0.2 - 0.1 - (r - 0.95) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+
+	//Tongue
+	glBegin(GL_QUADS);
+	glVertex2f(0.15,-0.2);
+	glVertex2f(0.2,-0.15);
+	glVertex2f(0, 0);
+	glVertex2f(0.02, 0.02);
+	glEnd();
+
+}
+
 void display()
 {
 	//--------------------------------
@@ -249,6 +409,15 @@ void display()
 		break;
 	case 4:
 		scotland();
+		break;
+	case 5:
+		japan();
+		break;
+	case 6:
+		smile();
+		break;
+	case 7:
+		emoji();
 		break;
 	}
 
@@ -272,7 +441,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	if (!RegisterClassEx(&wc)) return false;
 
 	HWND hWnd = CreateWindow(WINDOW_TITLE, WINDOW_TITLE, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+		CW_USEDEFAULT, CW_USEDEFAULT, 800, 800,
 		NULL, NULL, wc.hInstance, NULL);
 
 	//--------------------------------
