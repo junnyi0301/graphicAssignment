@@ -79,7 +79,7 @@ bool initPixelFormat(HDC hdc)
 	// choose pixel format returns the number most similar pixel format available
 	int n = ChoosePixelFormat(hdc, &pfd);
 
-	// set pixel format returns whether it sucessfully set the pixel format
+	// set pixel format returns whether it successfully set the pixel format
 	if (SetPixelFormat(hdc, n, &pfd))
 	{
 		return true;
@@ -383,10 +383,46 @@ void emoji() {
 
 	//Tongue
 	glBegin(GL_QUADS);
-	glVertex2f(0.15,-0.2);
-	glVertex2f(0.2,-0.15);
-	glVertex2f(0, 0);
-	glVertex2f(0.02, 0.02);
+	glVertex2f(0.06,-0.23);
+	glVertex2f(0.15,-0.19);
+	glVertex2f(0.2, -0.29);
+	glVertex2f(0.11, -0.33);
+	glEnd();
+
+	glLineWidth(2);
+	glColor3f(0.7, 0, 0.2);
+	glBegin(GL_LINES);
+	glVertex2f(0.12, -0.23);
+	glVertex2f(0.15, -0.3);
+	glEnd();
+
+	//Ears
+	glColor3f(1, 1, 0);
+	glBegin(GL_TRIANGLES);
+	glVertex2f(-0.4,0.3);
+	glVertex2f(-0.3,0.38);
+	glVertex2f(-0.5, 0.6);
+	glEnd();
+	
+	glColor3f(0, 0, 0);
+	glBegin(GL_TRIANGLES);
+	glVertex2f(-0.45,0.45);
+	glVertex2f(-0.3,0.38);
+	glVertex2f(-0.5, 0.6);
+	glEnd();
+
+	glColor3f(1, 1, 0);
+	glBegin(GL_TRIANGLES);
+	glVertex2f(0.4, 0.3);
+	glVertex2f(0.3, 0.38);
+	glVertex2f(0.5, 0.6);
+	glEnd();
+
+	glColor3f(0, 0, 0);
+	glBegin(GL_TRIANGLES);
+	glVertex2f(0.45, 0.45);
+	glVertex2f(0.3, 0.38);
+	glVertex2f(0.5, 0.6);
 	glEnd();
 
 }
