@@ -6,13 +6,8 @@
 
 #define WINDOW_TITLE "OpenGL Window"
 
-double x = 0, y = 0, scaleX = 1, scaleY = 1, rotateSpeed = 0;
-int page = 1;
-bool reset = false;
-float hue = 0.0f;
-double r = 1, g = 1, b = 1;
-double scale = 0;
-double PI = 3.14159265358979323846;
+double tx = 0, ty = 0;
+double rotateSpeed;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -25,48 +20,14 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 			PostQuitMessage(0);
-		else if (wParam == VK_LEFT)
-			x -= 0.2;
-		else if (wParam == VK_RIGHT)
-			x += 0.2;
-		else if (wParam == VK_DOWN)
-			y -= 0.2;
-		else if (wParam == VK_UP)
-			y += 0.2;
-		else if (wParam == 0x52) {
-			r = 1;
-			g = 0;
-			b = 0;
-		}
-		else if (wParam == 0x47) {
-			r = 0;
-			g = 1;
-			b = 0;
-		}
-		else if (wParam == 0x42) {
-			r = 0;
-			g = 0;
-			b = 1;
-		}
-		else if (wParam == VK_SPACE) {
-			r = 1;
-			g = 1;
-			b = 1;
-			x = 0;
-			y = 0;
-		}
-		else if (wParam == 0x31)
-			page = 1;
-		else if (wParam == 0x32)
-			page = 2;
-		else if (wParam == 0x33)
-			page = 3;
-		else if (wParam == 0x34) {
-			page = 4;
-			scaleX = 0;
-			scaleY = 0;
-		}
-			
+		if (wParam == VK_LEFT)
+			tx -= 0.05;
+		if (wParam == VK_RIGHT)
+			tx += 0.05;
+		if (wParam == VK_UP)
+			ty += 0.05;
+		if (wParam == VK_DOWN)
+			ty -= 0.05;
 		break;
 
 	default:
@@ -107,104 +68,143 @@ bool initPixelFormat(HDC hdc)
 		return false;
 	}
 }
-//--------------------------------------------------------------------
 
-void graphic() {
-	glClearColor(0, 0, 0, 0);
+void practice1() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glLoadIdentity();	//Reset the transformation
-	glTranslatef(0.5, -0.5, 0);
-	glRotatef(90, 0, 0, 1);
-	glScalef(0.5,0.5,0.5);
+	//Block 4
+	glPushMatrix();
+	glScalef(0.5, 0.5, 0.5);
 
-	glLoadIdentity();
-	glTranslatef(x, y, 0);
-	glColor3f(r, g, b);
+	//Block 5
+	glPushMatrix();
+	glRotatef(0.1, 0, 0, 1);
+
+	//Block 1
+	glPushMatrix();
+	glTranslatef(0, 0.5, 0);
+	glBegin(GL_TRIANGLES);
+	glColor3f(1, 0, 0);
+	glVertex2f(-0.5, 0);
+	glVertex2f(0, 0.5);
+	glVertex2f(0.5, 0);
+	glEnd();
+	glPopMatrix();
+
+	//Block 2
+	glPushMatrix();
+	glTranslatef(-0.5, 0, 0);
 	glBegin(GL_QUADS);
+	glColor3f(0, 1, 0);
 	glVertex2f(-0.5, 0);
 	glVertex2f(-0.5, 0.5);
 	glVertex2f(0.5, 0.5);
 	glVertex2f(0.5, 0);
 	glEnd();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.5, 0, 0);
+	glBegin(GL_QUADS);
+	glColor3f(0, 0, 1);
+	glVertex2f(-0.5, 0);
+	glVertex2f(-0.5, 0.5);
+	glVertex2f(0.5, 0.5);
+	glVertex2f(0.5, 0);
+	glEnd();
+	glPopMatrix();
 }
 
-void HSVtoRGB(float h, float s, float v, float& r, float& g, float& b) {
-	int i = int(h * 6);
-	float f = h * 6 - i;
-	float p = v * (1 - s);
-	float q = v * (1 - f * s);
-	float t = v * (1 - (1 - f) * s);
+void q1() {
 
-	switch (i % 6) {
-	case 0: r = v; g = t; b = p; break;
-	case 1: r = q; g = v; b = p; break;
-	case 2: r = p; g = v; b = t; break;
-	case 3: r = p; g = q; b = v; break;
-	case 4: r = t; g = p; b = v; break;
-	case 5: r = v; g = p; b = q; break;
-	}
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glPushMatrix();
+	glTranslatef(tx, ty, 0);
+	glBegin(GL_QUADS);
+	glColor3f(1, 0, 0);
+	glVertex2f(-0.5, 0);
+	glVertex2f(-0.5, 0.2);
+	glVertex2f(0, 0.2);
+	glVertex2f(0, 0);
+	glEnd();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(-tx, -ty, 0);
+	glBegin(GL_QUADS);
+	glColor3f(0, 1, 0);
+	glVertex2f(0.5, 0);
+	glVertex2f(0.5, 0.2);
+	glVertex2f(0, 0.2);
+	glVertex2f(0, 0);
+	glEnd();
+	glPopMatrix();
 }
 
-void updateColor() {
-	hue += 0.001f; // Speed of hue change
-	if (hue > 1.0f) hue -= 1.0f;
-
-	float r, g, b;
-	HSVtoRGB(hue, 1.0f, 1.0f, r, g, b);
-	glColor3f(r, g, b);
-}
-
-void star() {
-	glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
+void windmill() {
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	rotateSpeed += 0.05;
-	glLoadIdentity();
-	glTranslatef(x, y, 0); // Apply translation
+	glPushMatrix();
 	glRotatef(rotateSpeed, 0, 0, 1);
-	updateColor();
-
-	float centerX = 0.0f, centerY = 0.0f;
-	float radiusOuter = 0.5f;
-	float radiusInner = 0.2f;
-	int numPoints = 5; // Five-pointed star
-
-	glBegin(GL_TRIANGLE_FAN);
-	glVertex2f(centerX, centerY); // Central anchor
-
-	for (int i = 0; i <= numPoints * 2; ++i) {
-		float angle = i * PI / numPoints;
-		float radius = (i % 2 == 0) ? radiusOuter : radiusInner;
-		float x = centerX + radius * cos(angle);
-		float y = centerY + radius * sin(angle);
-		glVertex2f(x, y);
-	}
-
-	glEnd();
-}
-
-void rotatePoint() {
-	glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
-	glPointSize(8);
-	glRotatef(0.05, 0, 0, 1);
-	glBegin(GL_POINTS);
-	glColor3f(0.5,0,0.5);
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
 	glVertex2f(0.3, 0);
 	glEnd();
-}
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0, -0.3);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(-0.3, 0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0, 0.3);
+	glEnd();
+	glPopMatrix();
 
-void box() {
-	scaleX += 0.001;
-	scaleY += 0.001;
-	glLoadIdentity(); // Reset the transformation
-	glClear(GL_COLOR_BUFFER_BIT); // Clear the screen
-	glScalef(scaleX,scaleY,0);
+	glBegin(GL_TRIANGLES);
+	glVertex2f(-0.1, 0.05);
+	glVertex2f(0.1, 0.05);
+	glVertex2f(0, 0.3);
+	glEnd();
+
 	glBegin(GL_QUADS);
-	glColor3f(0.5, 0, 0.5);
 	glVertex2f(-0.1, -0.1);
-	glVertex2f(-0.1, 0.1);
-	glVertex2f(0.1, 0.1);
+	glVertex2f(-0.1, 0.05);
+	glVertex2f(0.1, 0.05);
 	glVertex2f(0.1, -0.1);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex2f(-0.1, -0.1);
+	glVertex2f(0.1, -0.1);
+	glVertex2f(0.15, -0.3);
+	glVertex2f(-0.15, -0.3);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex2f(-0.15, -0.3);
+	glVertex2f(0.15, -0.3);
+	glVertex2f(0.15, -0.5);
+	glVertex2f(-0.15, -0.5);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex2f(-0.15, -0.5);
+	glVertex2f(0.15, -0.5);
+	glVertex2f(0.25, -0.7);
+	glVertex2f(-0.25, -0.7);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex2f(-0.15, -0.3);
+	glVertex2f(0.15, -0.3);
+	glVertex2f(0.15, -0.5);
+	glVertex2f(-0.15, -0.5);
 	glEnd();
 }
 
@@ -213,19 +213,7 @@ void display()
 	//--------------------------------
 	//	OpenGL drawing
 	//--------------------------------
-	if (page == 1) {
-		graphic();
-	}
-	else if (page == 2) {
-		star();
-	}
-	else if (page == 3) {
-		rotatePoint();
-	}
-	else if (page == 4) {
-		box();
-	}
-
+	windmill();
 	//--------------------------------
 	//	End of OpenGL drawing
 	//--------------------------------
