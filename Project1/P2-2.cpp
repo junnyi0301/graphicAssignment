@@ -7,7 +7,9 @@
 #define WINDOW_TITLE "OpenGL Window"
 
 double tx = 0, ty = 0;
-double rotateSpeed;
+float rotateSpeed, sunSpeed = 0.05, moonSpeed = 0.05, sunPosition, moonPosition = 260;
+bool night, day;
+float r = 0.2, g = 0.8, b = 0.8;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -28,6 +30,14 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			ty += 0.05;
 		if (wParam == VK_DOWN)
 			ty -= 0.05;
+		if (wParam == 0x31) {
+			night = true;
+			day = false;
+		}
+		if (wParam == 0x32) {
+			day = true;
+			night = false;
+		}
 		break;
 
 	default:
@@ -145,33 +155,77 @@ void q1() {
 void windmill() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	rotateSpeed += 0.05;
+	glColor3f(r, g, b);
+	glBegin(GL_QUADS);
+	glVertex2f(-1, -0.3);
+	glVertex2f(1, -0.3);
+	glVertex2f(1, 1);
+	glVertex2f(-1, 1);
+	glEnd();
+
+	//Sun
+	if (night && sunPosition <= 180) {
+		sunPosition += sunSpeed;
+		if (r > 0.2) {
+			r -= 0.00009;
+		}
+		if (g > 0.3) {
+			g -= 0.00009;
+		}
+		if (b > 0.3) {
+			b -= 0.00009;
+		}
+	}
+
 	glPushMatrix();
-	glRotatef(rotateSpeed, 0, 0, 1);
-	glBegin(GL_LINES);
-	glVertex2f(0, 0);
-	glVertex2f(0.3, 0);
-	glEnd();
-	glBegin(GL_LINES);
-	glVertex2f(0, 0);
-	glVertex2f(0, -0.3);
-	glEnd();
-	glBegin(GL_LINES);
-	glVertex2f(0, 0);
-	glVertex2f(-0.3, 0);
-	glEnd();
-	glBegin(GL_LINES);
-	glVertex2f(0, 0);
-	glVertex2f(0, 0.3);
+	glRotatef(sunPosition, 0, 0, 1);
+	glColor3f(1, 0.5, 0.1);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(0.6, 0.6);
+	for (double angle = 0; angle <= 2 * 3.142; angle += (2 * 3.142) / 30) {
+		double x2 = 0.6 + (0.2) * cos(angle);
+		double y2 = 0.6 + (0.2) * sin(angle);
+		glVertex2f(x2, y2);
+	}
 	glEnd();
 	glPopMatrix();
 
+	
+	//Moon
+	if (night && sunPosition >= 160 && moonPosition < 360) {
+		moonPosition += moonSpeed;
+
+	}
+
+	glPushMatrix();
+	glRotatef(moonPosition, 0, 0, 1);
+	glColor3f(1, 1, 0);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(0.6, 0.6);
+	for (double angle = 0; angle <= 2 * 3.142; angle += (2 * 3.142) / 30) {
+		double x2 = 0.6 + (0.2) * cos(angle);
+		double y2 = 0.6 + (0.2) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+	glPopMatrix();
+
+	glColor3f(0, 0.6, 0);
+	glBegin(GL_QUADS);
+	glVertex2f(-1, -0.3);
+	glVertex2f(1, -0.3);
+	glVertex2f(1, -1);
+	glVertex2f(-1, -1);
+	glEnd();
+
+	glColor3f(0.2, 0, 0.09);
 	glBegin(GL_TRIANGLES);
-	glVertex2f(-0.1, 0.05);
-	glVertex2f(0.1, 0.05);
+	glVertex2f(-0.12, 0.05);
+	glVertex2f(0.12, 0.05);
 	glVertex2f(0, 0.3);
 	glEnd();
 
+	glColor3f(0.93, 0.89, 0.69);
 	glBegin(GL_QUADS);
 	glVertex2f(-0.1, -0.1);
 	glVertex2f(-0.1, 0.05);
@@ -186,6 +240,7 @@ void windmill() {
 	glVertex2f(-0.15, -0.3);
 	glEnd();
 
+	glColor3f(0.93, 0.89, 0.69);
 	glBegin(GL_QUADS);
 	glVertex2f(-0.15, -0.3);
 	glVertex2f(0.15, -0.3);
@@ -193,19 +248,44 @@ void windmill() {
 	glVertex2f(-0.15, -0.5);
 	glEnd();
 
+	glColor3f(0.2, 0, 0.09);
 	glBegin(GL_QUADS);
 	glVertex2f(-0.15, -0.5);
 	glVertex2f(0.15, -0.5);
-	glVertex2f(0.25, -0.7);
-	glVertex2f(-0.25, -0.7);
+	glVertex2f(0.3, -0.6);
+	glVertex2f(-0.3, -0.6);
 	glEnd();
 
+	glColor3f(0.93,0.89,0.69);
 	glBegin(GL_QUADS);
-	glVertex2f(-0.15, -0.3);
-	glVertex2f(0.15, -0.3);
-	glVertex2f(0.15, -0.5);
-	glVertex2f(-0.15, -0.5);
+	glVertex2f(-0.25, -0.6);
+	glVertex2f(0.25, -0.6);
+	glVertex2f(0.25, -0.8);
+	glVertex2f(-0.25, -0.8);
 	glEnd();
+
+	rotateSpeed += 0.05;
+	glPushMatrix();
+	glRotatef(rotateSpeed, 0, 0, 1);
+	glColor3f(1, 1, 1);
+	glLineWidth(40);
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0.4, 0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0, -0.4);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(-0.4, 0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0, 0.4);
+	glEnd();
+	glPopMatrix();
 }
 
 void display()

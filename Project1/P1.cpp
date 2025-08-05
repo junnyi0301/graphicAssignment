@@ -388,7 +388,7 @@ void emoji() {
 	glVertex2f(0.2, -0.29);
 	glVertex2f(0.11, -0.33);
 	glEnd();
-
+	
 	glLineWidth(2);
 	glColor3f(0.7, 0, 0.2);
 	glBegin(GL_LINES);
