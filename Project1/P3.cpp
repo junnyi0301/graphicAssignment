@@ -235,6 +235,7 @@ void display()
 	}
 	else if (page == 3) {
 		glPopMatrix();
+		glColor3f(0, 0, 1);
 		robotArm();
 	}
 }
