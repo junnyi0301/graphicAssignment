@@ -24,10 +24,13 @@
     <ClCompile Include="Template.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="P2-2.cpp">
+    <ClCompile Include="P3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="P3.cpp">
+    <ClCompile Include="P4A.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="P4B.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="P5.cpp">

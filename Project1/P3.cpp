@@ -6,11 +6,10 @@
 
 #define WINDOW_TITLE "OpenGL Window"
 
-int page = 1, x, y, z;
-
-float rotateSpeedX = 0, rotateSpeedY = 0, rotateSpeedZ = 0;
-
-bool move = false;
+double tx = 0, ty = 0;
+float rotateSpeed, sunSpeed = 0.05, moonSpeed = 0.05, sunPosition, moonPosition = 260;
+bool night, day;
+float r = 0.2, g = 0.8, b = 0.8;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -23,54 +22,21 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 			PostQuitMessage(0);
-		else if (wParam == 0x31)
-			page = 1;
-		else if (wParam == 0x32)
-			page = 2;
-		else if (wParam == 0x33)
-			page = 3;
-		else if (wParam == 0x58) {
-			x = 1;
-			y = 0;
-			z = 0;
+		if (wParam == VK_LEFT)
+			tx -= 0.05;
+		if (wParam == VK_RIGHT)
+			tx += 0.05;
+		if (wParam == VK_UP)
+			ty += 0.05;
+		if (wParam == VK_DOWN)
+			ty -= 0.05;
+		if (wParam == 0x31) {
+			night = true;
+			day = false;
 		}
-		else if (wParam == 0x59) {
-			x = 0;
-			y = 1;
-			z = 0;
-		}
-		else if (wParam == 0x5A) {
-			x = 0;
-			y = 0;
-			z = 1;
-		}
-		else if (wParam == VK_LEFT)
-			rotateSpeedY -= 2;
-		else if (wParam == VK_RIGHT)
-			rotateSpeedY += 2;
-		else if (wParam == VK_UP) {
-			if (move) {
-				rotateSpeedX += 1;
-			}
-			else if (!move) {
-				rotateSpeedZ -= 1;
-			}
-		}
-		else if (wParam == VK_DOWN) {
-			if (move && rotateSpeedX > 0) {
-				rotateSpeedX -= 1;
-			}
-			else if (!move) {
-				rotateSpeedZ += 1;
-			}
-		}
-		else if (wParam == 0x34) {
-			if (move == false) {
-				move = true;
-			}
-			else {
-				move = false;
-			}
+		if (wParam == 0x32) {
+			day = true;
+			night = false;
 		}
 		break;
 
@@ -112,132 +78,225 @@ bool initPixelFormat(HDC hdc)
 		return false;
 	}
 }
-//--------------------------------------------------------------------
 
-void drawCube(float size)
-{
-	glBegin(GL_QUADS);
-	// Face 1
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0.0f, 0.0f, size);
-	glVertex3f(size, 0.0f, size);
-	glVertex3f(size, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	// Face 2
-	glColor3f(0.0, 1.0, 0.0);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, size, 0.0f);
-	glVertex3f(0.0f, size, size);
-	glVertex3f(0.0f, 0.0f, size);
-	//Face 3
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex3f(0.0f, 0.0f, size);
-	glVertex3f(0.0f, size, size);
-	glVertex3f(size, size, size);
-	glVertex3f(size, 0.0f, size);
-	//Face 4
-	glColor3f(1.0, 1.0, 0.0);
-	glVertex3f(size, 0.0f, size);
-	glVertex3f(size, size, size);
-	glVertex3f(size, size, 0.0f);
-	glVertex3f(size, 0.0f, 0.0f);
-	//Face 5
-	glColor3f(1.0, 0.0, 1.0);
-	glVertex3f(size, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, size, 0.0f);
-	glVertex3f(size, size, 0.0f);
-	//Face 6
-	glColor3f(0.0, 1.0, 1.0);
-	glVertex3f(size, size, 0.0f);
-	glVertex3f(0.0f, size, 0.0f);
-	glVertex3f(0.0f, size, size);
-	glVertex3f(size, size, size);
-	glEnd();
-}
+void practice1() {
+	glClear(GL_COLOR_BUFFER_BIT);
 
-void drawPyramid(float size)
-{
-	glLineWidth(3.0);
-	glBegin(GL_LINE_LOOP);
-	// Face 1
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0.0f, 0.0f, size);
-	glVertex3f(size, 0.0f, size);
-	glVertex3f(size, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(0.0f, 0.0f, size);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(size, 0.0f, size);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(size, 0.0f, 0.0f);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glEnd();
-}
-
-void drawArm(float size) {
-	glLineWidth(5);
-	glBegin(GL_LINE_LOOP);
-	glVertex3f(0, 0, 0);
-	glVertex3f(size, 0, 0);
-	glVertex3f(size, 0.2, 0);
-	glVertex3f(0, 0.2, 0);
-	glVertex3f(0, 0.2, 0.2);
-	glVertex3f(size, 0.2, 0.2);
-	glVertex3f(size, 0, 0.2);
-	glVertex3f(0, 0, 0.2);
-	glEnd();
-
-	glBegin(GL_LINE_LOOP);
-	glVertex3f(0, 0, 0);
-	glVertex3f(0, 0.2, 0);
-	glVertex3f(0, 0.2, 0.2);
-	glVertex3f(0, 0, 0.2);
-	glEnd();
-	
-	glBegin(GL_LINE_LOOP);
-	glVertex3f(size, 0, 0);
-	glVertex3f(size, 0.2, 0);
-	glVertex3f(size, 0.2, 0.2);
-	glVertex3f(size, 0, 0.2);
-	glEnd();
-}
-
-void robotArm() {
+	//Block 4
 	glPushMatrix();
-	glRotatef(rotateSpeedY, 0, 1, 0);
+	glScalef(0.5, 0.5, 0.5);
+
+	//Block 5
 	glPushMatrix();
-	glRotatef(rotateSpeedZ,1,0,0);
+	glRotatef(0.1, 0, 0, 1);
+
+	//Block 1
 	glPushMatrix();
-	glRotatef(rotateSpeedX, 0, 0, 1);
-	drawArm(0.4);
+	glTranslatef(0, 0.5, 0);
+	glBegin(GL_TRIANGLES);
+	glColor3f(1, 0, 0);
+	glVertex2f(-0.5, 0);
+	glVertex2f(0, 0.5);
+	glVertex2f(0.5, 0);
+	glEnd();
 	glPopMatrix();
-	drawArm(-0.4);
+
+	//Block 2
+	glPushMatrix();
+	glTranslatef(-0.5, 0, 0);
+	glBegin(GL_QUADS);
+	glColor3f(0, 1, 0);
+	glVertex2f(-0.5, 0);
+	glVertex2f(-0.5, 0.5);
+	glVertex2f(0.5, 0.5);
+	glVertex2f(0.5, 0);
+	glEnd();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.5, 0, 0);
+	glBegin(GL_QUADS);
+	glColor3f(0, 0, 1);
+	glVertex2f(-0.5, 0);
+	glVertex2f(-0.5, 0.5);
+	glVertex2f(0.5, 0.5);
+	glVertex2f(0.5, 0);
+	glEnd();
+	glPopMatrix();
+}
+
+void q1() {
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glPushMatrix();
+	glTranslatef(tx, ty, 0);
+	glBegin(GL_QUADS);
+	glColor3f(1, 0, 0);
+	glVertex2f(-0.5, 0);
+	glVertex2f(-0.5, 0.2);
+	glVertex2f(0, 0.2);
+	glVertex2f(0, 0);
+	glEnd();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(-tx, -ty, 0);
+	glBegin(GL_QUADS);
+	glColor3f(0, 1, 0);
+	glVertex2f(0.5, 0);
+	glVertex2f(0.5, 0.2);
+	glVertex2f(0, 0.2);
+	glVertex2f(0, 0);
+	glEnd();
+	glPopMatrix();
+}
+
+void windmill() {
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glColor3f(r, g, b);
+	glBegin(GL_QUADS);
+	glVertex2f(-1, -0.3);
+	glVertex2f(1, -0.3);
+	glVertex2f(1, 1);
+	glVertex2f(-1, 1);
+	glEnd();
+
+	//Sun
+	if (night && sunPosition <= 180) {
+		sunPosition += sunSpeed;
+		if (r > 0.2) {
+			r -= 0.00009;
+		}
+		if (g > 0.3) {
+			g -= 0.00009;
+		}
+		if (b > 0.3) {
+			b -= 0.00009;
+		}
+	}
+
+	glPushMatrix();
+	glRotatef(sunPosition, 0, 0, 1);
+	glColor3f(1, 0.5, 0.1);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(0.6, 0.6);
+	for (double angle = 0; angle <= 2 * 3.142; angle += (2 * 3.142) / 30) {
+		double x2 = 0.6 + (0.2) * cos(angle);
+		double y2 = 0.6 + (0.2) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+	glPopMatrix();
+
+	
+	//Moon
+	if (night && sunPosition >= 160 && moonPosition < 360) {
+		moonPosition += moonSpeed;
+
+	}
+
+	glPushMatrix();
+	glRotatef(moonPosition, 0, 0, 1);
+	glColor3f(1, 1, 0);
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex2f(0.6, 0.6);
+	for (double angle = 0; angle <= 2 * 3.142; angle += (2 * 3.142) / 30) {
+		double x2 = 0.6 + (0.2) * cos(angle);
+		double y2 = 0.6 + (0.2) * sin(angle);
+		glVertex2f(x2, y2);
+	}
+	glEnd();
+	glPopMatrix();
+
+	glColor3f(0, 0.6, 0);
+	glBegin(GL_QUADS);
+	glVertex2f(-1, -0.3);
+	glVertex2f(1, -0.3);
+	glVertex2f(1, -1);
+	glVertex2f(-1, -1);
+	glEnd();
+
+	glColor3f(0.2, 0, 0.09);
+	glBegin(GL_TRIANGLES);
+	glVertex2f(-0.12, 0.05);
+	glVertex2f(0.12, 0.05);
+	glVertex2f(0, 0.3);
+	glEnd();
+
+	glColor3f(0.93, 0.89, 0.69);
+	glBegin(GL_QUADS);
+	glVertex2f(-0.1, -0.1);
+	glVertex2f(-0.1, 0.05);
+	glVertex2f(0.1, 0.05);
+	glVertex2f(0.1, -0.1);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex2f(-0.1, -0.1);
+	glVertex2f(0.1, -0.1);
+	glVertex2f(0.15, -0.3);
+	glVertex2f(-0.15, -0.3);
+	glEnd();
+
+	glColor3f(0.93, 0.89, 0.69);
+	glBegin(GL_QUADS);
+	glVertex2f(-0.15, -0.3);
+	glVertex2f(0.15, -0.3);
+	glVertex2f(0.15, -0.5);
+	glVertex2f(-0.15, -0.5);
+	glEnd();
+
+	glColor3f(0.2, 0, 0.09);
+	glBegin(GL_QUADS);
+	glVertex2f(-0.15, -0.5);
+	glVertex2f(0.15, -0.5);
+	glVertex2f(0.3, -0.6);
+	glVertex2f(-0.3, -0.6);
+	glEnd();
+
+	glColor3f(0.93,0.89,0.69);
+	glBegin(GL_QUADS);
+	glVertex2f(-0.25, -0.6);
+	glVertex2f(0.25, -0.6);
+	glVertex2f(0.25, -0.8);
+	glVertex2f(-0.25, -0.8);
+	glEnd();
+
+	rotateSpeed += 0.05;
+	glPushMatrix();
+	glRotatef(rotateSpeed, 0, 0, 1);
+	glColor3f(1, 1, 1);
+	glLineWidth(40);
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0.4, 0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0, -0.4);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(-0.4, 0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex2f(0, 0);
+	glVertex2f(0, 0.4);
+	glEnd();
 	glPopMatrix();
 }
 
 void display()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-
-	if (page == 1) {
-		glPushMatrix();
-		glRotatef(0.01, 1, 1, 1);
-		drawCube(0.3);
-	}
-	else if (page == 2) {
-		glPushMatrix();
-		glRotatef(0.1, x, y, z);
-		drawPyramid(0.2);
-	}
-	else if (page == 3) {
-		glPopMatrix();
-		glColor3f(0, 0, 1);
-		robotArm();
-	}
+	//--------------------------------
+	//	OpenGL drawing
+	//--------------------------------
+	windmill();
+	//--------------------------------
+	//	End of OpenGL drawing
+	//--------------------------------
 }
 //--------------------------------------------------------------------
 

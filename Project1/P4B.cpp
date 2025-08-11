@@ -3,16 +3,12 @@
 #include <math.h>
 #include <GL/glu.h>
 
-
 #pragma comment (lib, "OpenGL32.lib")
 
 #define WINDOW_TITLE "OpenGL Window"
 
-double translateZ = -5;
-float hue = 0.0f;
-int view = 2;
-bool isOrtho = false;
-
+int page = 1;
+double rotateX = 0, rotateY = 0, rotateZ = 0;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -25,18 +21,25 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 			PostQuitMessage(0);
-		else if (wParam == VK_UP)
-			translateZ += 0.2;
-		else if (wParam == VK_DOWN)
-			translateZ -= 0.2;
-		else if (wParam == 'O') {
-			isOrtho = true;
-			translateZ = 0;
+		if (wParam == 0x31)
+			page = 1;
+		if (wParam == 0x32)
+			page = 2;
+		if (wParam == 0x33) {
+			page = 3;
+			rotateX = 0;
+			rotateY = 0;
+			rotateZ = 0;
 		}
-		else if (wParam == 'P') {
-			isOrtho = false;
-			translateZ = -5;
-		}
+		if (wParam == VK_LEFT)
+			rotateY += 5;
+		if (wParam == VK_RIGHT)
+			rotateY -= 5;
+		if (wParam == VK_UP)
+			rotateZ += 5;
+		if (wParam == VK_DOWN)
+			rotateZ -= 5;
+
 		break;
 
 	default:
@@ -79,72 +82,129 @@ bool initPixelFormat(HDC hdc)
 }
 //--------------------------------------------------------------------
 
-void HSVtoRGB(float h, float s, float v, float& r, float& g, float& b) {
-	int i = int(h * 6);
-	float f = h * 6 - i;
-	float p = v * (1 - s);
-	float q = v * (1 - f * s);
-	float t = v * (1 - (1 - f) * s);
-
-	switch (i % 6) {
-	case 0: r = v; g = t; b = p; break;
-	case 1: r = q; g = v; b = p; break;
-	case 2: r = p; g = v; b = t; break;
-	case 3: r = p; g = q; b = v; break;
-	case 4: r = t; g = p; b = v; break;
-	case 5: r = v; g = p; b = q; break;
-	}
-}
-
-void updateColor() {
-	hue += 0.0001f; // Speed of hue change
-	if (hue > 1.0f) hue -= 1.0f;
-
-	float r, g, b;
-	HSVtoRGB(hue, 1.0f, 1.0f, r, g, b);
-	glColor3f(r, g, b);
-}
-
 void sphere() {
-
 	GLUquadricObj* quadric = NULL;
 	quadric = gluNewQuadric();
 
 	gluQuadricDrawStyle(quadric, GLU_LINE);
-	glLineWidth(2);
-	updateColor();
+	glRotatef(0.03, 1, 0, 0);
+	glColor3f(1, 0, 0);
 	gluSphere(quadric, 0.6, 30, 8);
-	gluDeleteQuadric(quadric);
+
 }
 
-void projection() {
-	glMatrixMode(GL_PROJECTION);
+void cyclinder() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	glRotatef(0.03, 1, 0, 0);
+	glColor3f(1, 0, 0);
+	gluCylinder(quadric, 0.6, 0.6, 0.5, 30, 8);
+}
+
+void iceCreamCone() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	glPushMatrix();
+	glRotatef(90,1,0,0);
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	glColor3f(0.72, 0.47, 0.34);
+	gluCylinder(quadric, 0.2, 0, 0.6, 30, 8);
+	glLineWidth(2);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	glColor3f(0.25, 0.15, 0.10);
+	gluCylinder(quadric, 0.21, 0, 0.6, 10, 5);
+	glPopMatrix();
+}
+
+void iceCream(double radius) {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	gluSphere(quadric, radius, 30, 8);
+}
+
+void topping1() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	glColor3f(0.25, 0.15, 0.10);
+	gluCylinder(quadric, 0.02, 0.02, 0.5, 30, 8);
+}
+
+void topping2() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	glColor3f(1, 1, 1);
+	gluCylinder(quadric, 0.12, 0.12, 0.005, 30, 8);
+}
+
+void cherry() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	glColor3f(1, 0, 0);
+	gluSphere(quadric, 0.06, 30, 8);
+}
+
+void iceCreamComplete() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
 	glLoadIdentity();
+	glRotatef(rotateY, 0, 1, 0);
+	glRotatef(rotateX, 1, 0, 0);
+	glRotatef(rotateZ, 0, 0, 1);
+	glColor3f(0.8,0.8,0);
+	iceCream(0.18);
+	glColor3f(0, 0.8, 0.8);
+	glPushMatrix();
+	glTranslatef(0, 0.2, 0);
+	iceCream(0.17);
+	glPopMatrix();
+	iceCreamCone();
 
-	if(isOrtho)
-		glOrtho(-4, 4, -2.25, 2.25, -4, 4);
-	else
-		gluPerspective(20, 1.77, 1, 10);
+	glPushMatrix();
+	glTranslatef(0, 0.38, 0);
+	cherry();
+	glPopMatrix();
 
-	//glFrustum(-4,4,-2.25,2.25,1,10);
+	glPushMatrix();
+	glTranslatef(0, 0.1, 0);
+	glPushMatrix();
+	glRotatef(-60, 1, 0, 0);
+	topping1();
+	glPopMatrix();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0, 0.35, -0.1);
+	glPushMatrix();
+	glRotatef(-35, 1, 0, 0);
+	topping2();
+	glPopMatrix();
+	glPopMatrix();
 
 }
-
 
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
-	projection();
-
-	glPushMatrix();
-	glRotatef(90, 1, 0, 0);
-	glPushMatrix();
-	glTranslatef(0, translateZ, 0);
-	sphere();
-	glPopMatrix();
-	glPopMatrix();
+	if (page == 1)
+		sphere();
+	else if (page == 2)
+		cyclinder();
+	else if (page == 3)
+		iceCreamComplete();
 }
 //--------------------------------------------------------------------
 
@@ -162,7 +222,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	if (!RegisterClassEx(&wc)) return false;
 
 	HWND hWnd = CreateWindow(WINDOW_TITLE, WINDOW_TITLE, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,
+		CW_USEDEFAULT, CW_USEDEFAULT, 800, 800,
 		NULL, NULL, wc.hInstance, NULL);
 
 	//--------------------------------
