@@ -7,7 +7,7 @@
 #define WINDOW_TITLE "OpenGL Window"
 
 double tx = 0, ty = 0;
-float rotateSpeed, sunSpeed = 0.05, moonSpeed = 0.05, sunPosition, moonPosition = 260;
+float rotateSpeed, sunSpeed = 0.05, moonSpeed = 0.05, sunPosition, moonPosition = 260, rotate = 0;
 bool night, day;
 float r = 0.2, g = 0.8, b = 0.8;
 
@@ -22,14 +22,21 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 			PostQuitMessage(0);
-		if (wParam == VK_LEFT)
+		if (wParam == VK_LEFT) {
+			rotateSpeed += 0.01;
 			tx -= 0.05;
-		if (wParam == VK_RIGHT)
+		}
+		if (wParam == VK_RIGHT) {
+			rotateSpeed -= 0.01;
 			tx += 0.05;
+		}
 		if (wParam == VK_UP)
 			ty += 0.05;
 		if (wParam == VK_DOWN)
 			ty -= 0.05;
+		if (wParam == VK_SPACE) {
+			rotateSpeed = 0;
+		}
 		if (wParam == 0x31) {
 			night = true;
 			day = false;
@@ -264,9 +271,9 @@ void windmill() {
 	glVertex2f(-0.25, -0.8);
 	glEnd();
 
-	rotateSpeed += 0.05;
+	rotate += rotateSpeed;
 	glPushMatrix();
-	glRotatef(rotateSpeed, 0, 0, 1);
+	glRotatef(rotate, 0, 0, 1);
 	glColor3f(1, 1, 1);
 	glLineWidth(40);
 	glBegin(GL_LINES);

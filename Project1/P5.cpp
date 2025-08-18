@@ -9,9 +9,15 @@
 #define WINDOW_TITLE "OpenGL Window"
 
 double translateZ = -5;
+double tSpeed = 0.2;
+double position = 5;
 float hue = 0.0f;
 int view = 2;
 bool isOrtho = false;
+double ONear = -10, OFar = 10, PNear = 1, PFar = 10;
+double ptx = 0, pty = 0;		//translate x and y for projection with tSpeed
+double tx = 0;
+double pRy = 0, prSpeed = 2;	//Rotate Y with prSpeed for projection
 
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -25,10 +31,35 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 			PostQuitMessage(0);
-		else if (wParam == VK_UP)
-			translateZ += 0.2;
-		else if (wParam == VK_DOWN)
-			translateZ -= 0.2;
+		else if (wParam == VK_UP) {
+			if (isOrtho) {
+				if (translateZ < OFar - 0.6)
+					translateZ += tSpeed;
+			}else {
+				if (position > PNear + 0.4 /*tz < PNear - radius*/) {
+					position -= tSpeed;
+					translateZ += tSpeed;
+				}
+			}
+		}
+		else if (wParam == VK_DOWN) {
+			if (isOrtho) {
+				if (translateZ > ONear - 0.6) {
+					translateZ -= tSpeed;
+				}
+			} else {
+				if (position < PFar + 0.2 /*tz > PNear - PFar*/) {
+					position += tSpeed;
+					translateZ -= tSpeed;
+				}
+			}
+		}
+		else if (wParam == VK_LEFT) {
+			tx -= tSpeed;
+		}
+		else if (wParam == VK_RIGHT) {
+			tx += tSpeed;
+		}
 		else if (wParam == 'O') {
 			isOrtho = true;
 			translateZ = 0;
@@ -36,6 +67,25 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		else if (wParam == 'P') {
 			isOrtho = false;
 			translateZ = -5;
+			position = 5;
+		}
+		else if (wParam == 'A') {
+			ptx -= tSpeed;
+		}
+		else if (wParam == 'D') {
+			ptx += tSpeed;
+		}
+		else if (wParam == 'W') {
+			pty += tSpeed;
+		}
+		else if (wParam == 'S') {
+			pty += tSpeed;
+		}
+		else if (wParam == 'Q') {
+			pRy += prSpeed;
+		}
+		else if (wParam == 'E') {
+			pRy -= prSpeed;
 		}
 		break;
 
@@ -113,7 +163,7 @@ void sphere() {
 	gluQuadricDrawStyle(quadric, GLU_LINE);
 	glLineWidth(2);
 	updateColor();
-	gluSphere(quadric, 0.6, 30, 8);
+	gluSphere(quadric, 0.6, 30, 30);
 	gluDeleteQuadric(quadric);
 }
 
@@ -121,10 +171,13 @@ void projection() {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
+	glTranslatef(ptx, pty, 0);	//Translate x and y for projection
+	glRotatef(pRy, 0, 1, 0);
+
 	if(isOrtho)
-		glOrtho(-4, 4, -2.25, 2.25, -4, 4);
+		glOrtho(-4, 4, -2.25, 2.25, ONear, OFar);
 	else
-		gluPerspective(20, 1.77, 1, 10);
+		gluPerspective(20, 1.77, PNear, PFar);
 
 	//glFrustum(-4,4,-2.25,2.25,1,10);
 
@@ -138,10 +191,14 @@ void display()
 
 	projection();
 
+	/*glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(tx, 0, translateZ);*/
+
 	glPushMatrix();
 	glRotatef(90, 1, 0, 0);
 	glPushMatrix();
-	glTranslatef(0, translateZ, 0);
+	glTranslatef(tx, translateZ, 0);
 	sphere();
 	glPopMatrix();
 	glPopMatrix();
