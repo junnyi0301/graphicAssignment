@@ -45,6 +45,9 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			day = true;
 			night = false;
 		}
+		if (wParam == VK_SPACE) {
+
+		}
 		break;
 
 	default:
@@ -300,7 +303,9 @@ void display()
 	//--------------------------------
 	//	OpenGL drawing
 	//--------------------------------
-	windmill();
+	q1();
+
+	
 	//--------------------------------
 	//	End of OpenGL drawing
 	//--------------------------------
