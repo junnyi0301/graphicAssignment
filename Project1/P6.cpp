@@ -110,21 +110,35 @@ void sphere(double r) {
 void drawPyramid(float size)
 {
 	glLineWidth(3.0);
+	glBegin(GL_LINE_STRIP);
+	glColor3f(0, 1, 0.0);
+	glVertex3f(0, size / 2, 0);
+	glVertex3f(-size / 2, -size / 2, -size / 2);
+	glVertex3f(size / 2, -size / 2, -size / 2);
+	glVertex3f(0, size / 2, 0);
+	glVertex3f(size / 2, -size / 2, -size / 2);
+	glVertex3f(size / 2, -size / 2, size / 2);
+	glVertex3f(0, size / 2, 0);
+	glVertex3f(size / 2, -size / 2, size / 2);
+	glVertex3f(-size / 2, -size / 2, size / 2);
+	glVertex3f(0, size / 2, 0);
+	glEnd();
+
 	glBegin(GL_TRIANGLE_FAN);
-	// Face 1
 	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0.0f, 0.0f, size);
-	glVertex3f(size, 0.0f, size);
-	glVertex3f(size, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(0.0f, 0.0f, size);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(size, 0.0f, size);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(size, 0.0f, 0.0f);
-	glVertex3f(size / 2, size, size / 2);
-	glVertex3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(0, size/2, 0);
+	glVertex3f(-size/2, -size/2, -size/2);
+	glVertex3f(size/2, -size / 2, -size/2);
+	glVertex3f(size/2, -size / 2, size/2);
+	glVertex3f(-size/2, -size / 2, size/2);
+	glVertex3f(-size / 2, -size / 2, -size / 2);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(-size / 2, -size / 2, -size / 2);
+	glVertex3f(size / 2, -size / 2, -size / 2);
+	glVertex3f(size / 2, -size / 2, size / 2);
+	glVertex3f(-size / 2, -size / 2, size / 2);
 	glEnd();
 }
 
@@ -166,7 +180,7 @@ void display()
 	if (page == 1)
 		sphere(0.5);
 	else if (page == 2)
-		drawPyramid(0.4);
+		drawPyramid(0.8);
 
 
 }
