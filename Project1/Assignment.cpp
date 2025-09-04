@@ -19,6 +19,22 @@ bool leftArmMovement = true;
 float leftX = 0, rightX = 0;
 float armMaxHeight = 180, armSpeed = 5, armMinHeight = -45;
 
+//Walking Animation
+float leftLegAngle = 0.0f;
+float rightLegAngle = 0.0f;
+float leftArmAngle = 0.0f;
+float rightArmAngle = 0.0f;
+
+bool isWalking = false;
+bool leftLegForward = true;
+bool rightLegForward = false; // opposite phase
+bool leftArmForward = false;
+bool rightArmForward = true;
+
+float stepSpeed = 0.1f;   // how fast the angle changes
+float maxLegAngle = 10.0f; // max swing
+float maxArmAngle = 20.0f;
+
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
@@ -44,6 +60,8 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			pRz -= 0.1;
 		else if (wParam == 'L')
 			leftArmMovement = !leftArmMovement;
+		else if (wParam == 'M')
+			isWalking = !isWalking;
 		else if (wParam == VK_UP)
 			leftArmMovement ? leftX < armMaxHeight ? leftX += armSpeed : leftX = armMaxHeight : rightX < armMaxHeight ? rightX += armSpeed : rightX = armMaxHeight;
 		else if (wParam == VK_DOWN)
@@ -110,12 +128,10 @@ void fingerPart() {
 	glPushMatrix();
 	glScalef(0.1, 0.1, 0.5);
 	gluQuadricDrawStyle(quadric, GLU_LINE);
-	//glColor3f(1, 0, 0);
 	gluCylinder(quadric, 0.2, 0.2, 0.1, 10, 1);
-	glPopMatrix();
-	glPopMatrix();
-
 	gluDeleteQuadric(quadric);
+	glPopMatrix();
+	glPopMatrix();
 }
 void fingerTip() {
 	GLUquadricObj* quadric = NULL;
@@ -175,7 +191,7 @@ void thumb() {
 }
 void pinky() {
 	glPushMatrix();
-	glScalef(0.78, 0.75, 0.78);
+	glScalef(0.78, 0.7, 0.78); //Adjust the size of the finger
 	finger();
 	glPopMatrix();
 }
@@ -197,7 +213,6 @@ void cyclinder() {
 
 	glPushMatrix();
 	glRotatef(90, 1, 0, 0);
-	//glScalef(1, 1, 1);
 	gluQuadricDrawStyle(quadric, GLU_LINE);
 	gluCylinder(quadric, 0.15, 0.2, 0.2, 10, 1);
 	glPopMatrix();
@@ -205,80 +220,96 @@ void cyclinder() {
 	gluDeleteQuadric(quadric);
 }
 void palm() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
 	glPushMatrix();
 	glScalef(0.5, 0.7, 0.16);
-	cyclinder();
+	glRotatef(90, 1, 0, 0);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.15, 0.2, 0.2, 10, 1);
+	gluDeleteQuadric(quadric);
 	glPopMatrix();
 	
 }
 
 void fingers(bool left) {
 
-	glPushMatrix();
+	//Pinky finger
 	if (left) {
-		glTranslatef(0, 0.03, 0.01);
-		pinky();
+		glPushMatrix();
+		glTranslatef(-0.08, 0.03, 0.01);
 	}
 	else {
-		glTranslatef(0, 0.02, 0.03);
-		thumb();
+		glPushMatrix();
+		glTranslatef(0.08, 0.03, 0.01);
 	}
+
+	pinky();
 	glPopMatrix();
 
-
+	//Ring finger
 	glPushMatrix();
-	glTranslatef(0.04, 0.01, 0);
-	if (left)
-		ring();
-	else
-		index();
+	if (left) {
+		glTranslatef(-0.04, 0.01, 0);
+	}
+	else {
+		glTranslatef(0.04, 0.01, 0);
+	}
+	ring();
 	glPopMatrix();
 
 	//Middle finger
-	glPushMatrix();
-	glTranslatef(0.08, 0, 0);
 	finger();
-	glPopMatrix();
 
+	//Index finger
 	glPushMatrix();
-	glTranslatef(0.12, 0.01, 0);
+	if (left) {
+		glTranslatef(0.04, 0.01, 0);
+	}
+	else {
+		glTranslatef(-0.04, 0.01, 0);
+	}
 	index();
 	glPopMatrix();
 
+	//Thumb
 	glPushMatrix();
 	if (left) {
-		glTranslatef(0.16, 0.02, 0.03);
-		thumb();
+		glTranslatef(0.08, 0.02, 0.03);
 	}
 	else {
-		glTranslatef(0.16, 0.03, 0.01);
-		pinky();
+		glTranslatef(-0.08, 0.02, 0.03);
 	}
+	thumb();
 	glPopMatrix();
+
 }
 void hand(bool left) {
 	glPushMatrix();
-	glTranslatef(0.08, 0.15, 0.015);
+	glTranslatef(0, 0.15, 0.015);
 	palm();
 	glPopMatrix();
 
+	
 	fingers(left);
+
 }
 void sleeve(bool left) {
 	GLUquadricObj* quadric = NULL;
 	quadric = gluNewQuadric();
 
 	glPushMatrix();
-	glTranslatef(left ? 0.15 : 0, 0.5, 0.01);
+	glTranslatef(0, 0.5, 0.01);
 	glPushMatrix();
 	glRotatef(left ? -15 : 15, 0, 0, 1);
 	glPushMatrix();
 	glRotatef(90, 1, 0, 0);
 	glPushMatrix();
-	glScalef(0.2, 0.1, 0.5);
+	glScalef(0.2, 0.15, 0.5);
 	gluQuadricDrawStyle(quadric, GLU_LINE);
 	glColor3f(1, 0, 0);
-	gluCylinder(quadric, 0.4, 0.8, 0.8, 10, 3);
+	gluCylinder(quadric, 0.4, 0.7, 0.8, 10, 3);
 	glPopMatrix();
 	glPopMatrix();
 	glPopMatrix();
@@ -287,19 +318,23 @@ void sleeve(bool left) {
 
 void arm(bool left) {
 	sleeve(left);
-
+	
 	glPushMatrix();
-	glRotatef(left ? -5 : 5, 0, 0, 1);
+	glTranslatef(left ? -0.08 : 0.08,0.02,0);
+	glRotatef(left ? -15 : 15, 0, 0, 1);
+	glRotatef(left ? 50 : -50, 0, 1, 0);
+	glScalef(0.7,0.7,0.7);
 	hand(left);
+	glPopMatrix();
 	glPopMatrix();
 }
 
 
 void arms() {
 	glPushMatrix();
-	glTranslatef(-0.4, 0, 0);
+	glTranslatef(-0.3, 0, 0);
 	glPushMatrix();
-	glRotatef(leftX, 1, 0, 0);
+	glRotatef(leftArmAngle, 1, 0, 0);
 	glPushMatrix();
 	glTranslatef(0, -0.5, 0);
 	arm(true);
@@ -308,15 +343,217 @@ void arms() {
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(0.4, 0, 0);
+	glTranslatef(0.3, 0, 0);
 	glPushMatrix();
-	glRotatef(rightX, 1, 0, 0);
+	glRotatef(rightArmAngle, 1, 0, 0);
 	glPushMatrix();
 	glTranslatef(0, -0.5, 0);
 	arm(false);
 	glPopMatrix();
 	glPopMatrix();
 	glPopMatrix();
+}
+
+//Body
+void torso() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	//Chest
+	glPushMatrix();
+	glTranslatef(0, -0.05, 0);
+	glRotatef(90, 1, 0, 0);
+	glScalef(1,0.7,1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.25, 0.25, 0.25, 10, 1);
+	glPopMatrix();
+
+	//Waits
+	glPushMatrix();
+	glTranslatef(0, -0.3, 0);
+	glRotatef(90, 1, 0, 0);
+	glScalef(1, 0.7, 1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.25, 0.25, 0.05, 10, 1);
+	glPopMatrix();
+
+	//Lower
+	glPushMatrix();
+	glTranslatef(0,-0.35,0);
+	glRotatef(90, 1, 0, 0);
+	glScalef(1, 0.7, 1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.25, 0.35, 0.45, 10, 1);
+	glPopMatrix();
+
+	gluDeleteQuadric(quadric);
+}
+
+void hoodie() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	glPushMatrix();
+	glTranslatef(0, -0.05, 0);
+	glRotatef(-90, 1, 0, 0);
+	glScalef(1.3, 0.8, 1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.19, 0.3, 0.08, 10, 1);
+	glPopMatrix();
+
+	gluDeleteQuadric(quadric);
+
+}
+
+void body() {
+	torso();
+	hoodie();
+}
+
+void foot() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+	GLenum drawstyle = GLU_LINE;
+
+	//Leg
+	glPushMatrix();
+	glTranslatef(0, -0.6, 0);
+	glRotatef(90, 1, 0, 0);
+	glScalef(1, 1, 1);
+	gluQuadricDrawStyle(quadric, drawstyle);
+	gluCylinder(quadric, 0.08, 0.08, 0.3, 10, 1);
+	glPopMatrix();
+
+	//Shoe sole
+	glPushMatrix();
+	glTranslatef(0, -0.87, -0.05);
+	glRotatef(90, 1, 0, 0);
+	glScalef(1, 1.4, 1);
+	gluQuadricDrawStyle(quadric, drawstyle);
+	gluCylinder(quadric, 0.08, 0.08, 0.04, 10, 1);
+	glPopMatrix();
+
+
+	//Shoe Tip
+	glPushMatrix();
+	glTranslatef(0, -0.87, -0.15);
+	glRotatef(0, 1, 0, 0);
+	glScalef(1.2, 0.5, 1);
+	gluQuadricDrawStyle(quadric, drawstyle);
+	gluCylinder(quadric, 0.05, 0.07, 0.1, 10, 1);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0, -0.87, -0.15);
+	glRotatef(180, 1, 0, 0);
+	glScalef(1, 0.5, 1);
+	gluQuadricDrawStyle(quadric, drawstyle);
+	gluCylinder(quadric, 0.06, 0, 0.02, 10, 1);
+	glPopMatrix();
+
+	gluDeleteQuadric(quadric);
+}
+
+void updateWalk() {
+	// ---- Left leg ----
+	if (leftLegForward) {
+		leftLegAngle += stepSpeed;
+		if (leftLegAngle >= maxLegAngle) leftLegForward = false;
+	}
+	else {
+		leftLegAngle -= stepSpeed;
+		if (leftLegAngle <= -maxLegAngle) leftLegForward = true;
+	}
+
+	// ---- Right leg (opposite) ----
+	if (rightLegForward) {
+		rightLegAngle += stepSpeed;
+		if (rightLegAngle >= maxLegAngle) rightLegForward = false;
+	}
+	else {
+		rightLegAngle -= stepSpeed;
+		if (rightLegAngle <= -maxLegAngle) rightLegForward = true;
+	}
+
+	// ---- Left arm (opposite to left leg) ----
+	if (leftArmForward) {
+		leftArmAngle += stepSpeed;
+		if (leftArmAngle >= maxArmAngle) leftArmForward = false;
+	}
+	else {
+		leftArmAngle -= stepSpeed;
+		if (leftArmAngle <= -maxArmAngle) leftArmForward = true;
+	}
+
+	// ---- Right arm (opposite to right leg) ----
+	if (rightArmForward) {
+		rightArmAngle += stepSpeed;
+		if (rightArmAngle >= maxArmAngle) rightArmForward = false;
+	}
+	else {
+		rightArmAngle -= stepSpeed;
+		if (rightArmAngle <= -maxArmAngle) rightArmForward = true;
+	}
+}
+
+void feet() {
+	glColor3f(1, 1, 0);
+	glPushMatrix();
+	glTranslatef(-0.1, 0, 0);
+	glRotatef(leftLegAngle, 1, 0, 0);
+	foot();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.1, 0, 0);
+	glRotatef(rightLegAngle, 1, 0, 0);
+	foot();
+	glPopMatrix();
+}
+
+void weapon() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	//Handle
+	glPushMatrix();
+	glTranslatef(-1, 0.25, 0);
+	glRotatef(90, 1, 0, 0);
+	glScalef(1, 1, 1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.01, 0.01, 1.15, 30, 1);
+	glPopMatrix();
+
+	//Connector
+	glColor3f(0, 1, 1);
+	glPushMatrix();
+	glTranslatef(-1, 0.18, 0);
+	glRotatef(-90, 1, 0, 0);
+	glScalef(1, 1, 1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.02, 0.03, 0.12, 10, 1);
+	glPopMatrix();
+
+	//Tip
+	glColor3f(1, 0, 1);
+	glPushMatrix();
+	glTranslatef(-1, 0.25, 0);
+	glRotatef(-90, 1, 0, 0);
+	glScalef(1.7, 0.7, 1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.01, 0.05, 0.15, 4, 1);
+	glPopMatrix();
+
+	glColor3f(1, 0, 1);
+	glPushMatrix();
+	glTranslatef(-1, 0.4, 0);
+	glRotatef(-90, 1, 0, 0);
+	glScalef(1.7, 0.7, 1);
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+	gluCylinder(quadric, 0.05, 0, 0.3, 4, 1);
+	glPopMatrix();
+
+	gluDeleteQuadric(quadric);
 }
 
 void display()
@@ -331,7 +568,18 @@ void display()
 		0.0, 0.0, 0.0,     // look at origin
 		0.0, 1.0, 0.0);
 
+	if(isWalking)
+		updateWalk();
+	else {
+		leftArmAngle = 0;
+		leftLegAngle = 0;
+		rightArmAngle = 0;
+		rightLegAngle = 0;
+	}
 	arms();
+	body();
+	feet();
+	weapon();
 }
 //--------------------------------------------------------------------
 
