@@ -45,5 +45,28 @@
     <ClCompile Include="Bridge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="P7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="road.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="roof.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="stoneWall.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Metal.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Box.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Brick.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -9,9 +9,16 @@
 
 //Camera movement
 float ptx = 0, pty = 0, pRy = 0, pRx = 0, pRz = 1;
-float bridgeHeight = 0, bridgeSpeed = 0.01;
+float bridgeHeight = 0, bridgeSpeed = 0.5;
 bool up = false;
+bool carVisible = false;
+float carZ = 7;
 bool perspective = true;
+
+// Step 1
+BITMAP BMP;				// bitmap structure
+HBITMAP hBMP = NULL;	//
+GLuint texture;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -36,8 +43,16 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			pRz += 0.1;
 		else if (wParam == 'Q')
 			pRz -= 0.1;
-		else if (wParam == 'B')
-			up = !up;
+		else if (wParam == 'B') {
+			if(!carVisible)
+				up = !up;
+		}
+		else if (wParam == 'C') {
+			if (bridgeHeight == 0) {
+				carVisible = !carVisible;
+				carZ = 7;
+			}
+		}
 		else if (wParam == 'P')
 			perspective = !perspective;
 		else if (wParam == VK_SPACE) {
@@ -89,6 +104,33 @@ bool initPixelFormat(HDC hdc)
 }
 //--------------------------------------------------------------------
 
+GLuint loadTexture(LPCSTR filename) {
+
+	// Take from step 1
+	GLuint texture = 0;		// texture name
+
+	// Step3: Initialize texture info
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	HBITMAP hBMP = (HBITMAP)LoadImage(GetModuleHandle(NULL),
+		filename, IMAGE_BITMAP, 0, 0,
+		LR_CREATEDIBSECTION | LR_LOADFROMFILE);
+	GetObject(hBMP, sizeof(BMP), &BMP);
+
+	//Step4: Assign texture to polygon.
+	glEnable(GL_TEXTURE_2D);
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+		GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+		GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, BMP.bmWidth,
+		BMP.bmHeight, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, BMP.bmBits);
+
+	DeleteObject(hBMP);	// take from Step 5
+	return texture;
+}
+
 void cyclinder(float radius, float height) {
 	GLUquadricObj* quadric = NULL;
 	quadric = gluNewQuadric();
@@ -106,6 +148,7 @@ void cone(float radius, float height) {
 	GLUquadricObj* quadric = NULL;
 	quadric = gluNewQuadric();
 
+	gluQuadricTexture(quadric, GL_TRUE);
 	glPushMatrix();
 	glRotatef(-90, 1, 0, 0);
 	gluQuadricDrawStyle(quadric, GLU_FILL);
@@ -170,170 +213,185 @@ void corner() {
 	glColor3f(0.784, 0.784, 0.745);
 	cyclinder(0.2, 1.7);
 	glTranslatef(0,1.7,0);
-	glColor3f(0.274, 0.314, 0.392);
+	texture = loadTexture("roof.bmp");
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glColor3f(1,1,1);
+	//glColor3f(0.274, 0.314, 0.392);
 	cone(0.25, 0.2);
 	glPopMatrix();
+	glDeleteTextures(1, &texture);
+
 }
 
 void layer() {
 	float height = 0.3;
-	glColor3f(0.627, 0.627, 0.588);
+	texture = loadTexture("stoneWall.bmp");
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glColor3f(1,1,1);
+	//glColor3f(0.627, 0.627, 0.588);
 	glBegin(GL_QUADS);
-	//Bottom face
-	glVertex3f(-0.2, 0, -0.2);
-	glVertex3f(0.2, 0, -0.2);
-	glVertex3f(0.2, 0, 0.2);
-	glVertex3f(-0.2, 0, 0.2);
 
-	//Top face
-	glVertex3f(-0.2, height, -0.2);
-	glVertex3f(0.2, height, -0.2);
-	glVertex3f(0.2, height, 0.2);
-	glVertex3f(-0.2, height, 0.2);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.2, 0, -0.2);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.2, 0, -0.2);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.2, 0, 0.2);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.2, 0, 0.2);
 
-	//Front face
-	glVertex3f(-0.2, 0, -0.2);
-	glVertex3f(0.2, 0, -0.2);
-	glVertex3f(0.2, height, -0.2);
-	glVertex3f(-0.2, height, -0.2);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.2, height, -0.2);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.2, height, -0.2);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.2, height, 0.2);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.2, height, 0.2);
+
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.2, 0, -0.2);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.2, 0, -0.2);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.2, height, -0.2);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.2, height, -0.2);
+
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.2, 0, 0.2);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.2, 0, 0.2);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.2, height, 0.2);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.2, height, 0.2);
+
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.2, 0, 0.2);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.2, height, 0.2);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.2, height, -0.2);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.2, 0, -0.2);
+
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(0.2, 0, 0.2);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(0.2, height, 0.2);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(0.2, height, -0.2);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(0.2, 0, -0.2);
 	glEnd();
+	glDeleteTextures(1, &texture);
+
 
 	glPushMatrix();
-	glTranslatef(0,height/2,-0.2);
+	glTranslatef(0, height / 2, -0.2);
 	glColor3f(0.961, 0.961, 0.941);
 	window(0.08, true);
 	glPopMatrix();
-
-	//Back
-	glColor3f(0.627, 0.627, 0.588);
-	glBegin(GL_QUADS);
-	glVertex3f(-0.2, 0, 0.2);
-	glVertex3f(0.2, 0, 0.2);
-	glVertex3f(0.2, height, 0.2);
-	glVertex3f(-0.2, height, 0.2);
-	glEnd();
 
 	glPushMatrix();
 	glTranslatef(0, height / 2, 0.2);
 	glColor3f(0.961, 0.961, 0.941);
 	window(0.08, false);
 	glPopMatrix();
-
-	//Sides
-	glColor3f(0.627, 0.627, 0.588);
-	glBegin(GL_QUADS);
-	glVertex3f(-0.2, 0, 0.2);
-	glVertex3f(-0.2, height, 0.2);
-	glVertex3f(-0.2, height, -0.2);
-	glVertex3f(-0.2, 0, -0.2);
-
-	glVertex3f(0.2, 0, 0.2);
-	glVertex3f(0.2, height, 0.2);
-	glVertex3f(0.2, height, -0.2);
-	glVertex3f(0.2, 0, -0.2);
-
-	//Bottom face
-	glVertex3f(-0.2, 0, -0.2);
-	glVertex3f(0.2, 0, -0.2);
-	glVertex3f(0.2, 0, 0.2);
-	glVertex3f(-0.2, 0, 0.2);
-
-	//Top face
-	glVertex3f(-0.2, height, -0.2);
-	glVertex3f(0.2, height, -0.2);
-	glVertex3f(0.2, height, 0.2);
-	glVertex3f(-0.2, height, 0.2);
-	glEnd();
-
-
 }
 
 void cube(float width, float y) {
 	glBegin(GL_QUADS);
+
 	// Front
-	glVertex3f(-width, 0, -width);
-	glVertex3f(width, 0, -width);
-	glVertex3f(width, 0.1, -width);
-	glVertex3f(-width, 0.1, -width);
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, -width);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0, -width);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, 0.1, -width);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, 0.1, -width);
 
-	//Back
-	glVertex3f(-width, 0, width);
-	glVertex3f(width, 0, width);
-	glVertex3f(width, y, width);
-	glVertex3f(-width, y, width);
+	// Back
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, width);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0, width);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, y, width);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, y, width);
 
-	//Sides
-	glVertex3f(-width, 0, width);
-	glVertex3f(-width, y, width);
-	glVertex3f(-width, y, -width);
-	glVertex3f(-width, 0, -width);
+	// Left side
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, width);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-width, y, width);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-width, y, -width);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, 0, -width);
 
-	glVertex3f(width, 0, width);
-	glVertex3f(width, y, width);
-	glVertex3f(width, y, -width);
-	glVertex3f(width, 0, -width);
+	// Right side
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(width, 0, width);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, y, width);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, y, -width);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(width, 0, -width);
 
-	//Bottom face
-	glVertex3f(-width, 0, -width);
-	glVertex3f(width, 0, -width);
-	glVertex3f(width, 0, width);
-	glVertex3f(-width, 0, width);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, -width);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0, -width);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, 0, width);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, 0, width);
 
-	//Top face
-	glVertex3f(-width, y, -width);
-	glVertex3f(width, y, -width);
-	glVertex3f(width, y, width);
-	glVertex3f(-width, y, width);
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, y, -width);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, y, -width);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, y, width);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, y, width);
+
 	glEnd();
 }
 
 void quad(float width, float y, float length) {
 	glBegin(GL_QUADS);
-	// Front
-	glVertex3f(-width, 0, -length);
-	glVertex3f(width, 0, -length);
-	glVertex3f(width, y, -length);
-	glVertex3f(-width, y, -length);
 
-	//Back
-	glVertex3f(-width, 0, length);
-	glVertex3f(width, 0, length);
-	glVertex3f(width, y, length);
-	glVertex3f(-width, y, length);
+	// Front face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, -length);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0, -length);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, y, -length);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, y, -length);
 
-	//Sides
-	glVertex3f(-width, 0, length);
-	glVertex3f(-width, y, length);
-	glVertex3f(-width, y, -length);
-	glVertex3f(-width, 0, -length);
+	// Back face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, length);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0, length);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, y, length);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, y, length);
 
-	glVertex3f(width, 0, length);
-	glVertex3f(width, y, length);
-	glVertex3f(width, y, -length);
-	glVertex3f(width, 0, -length);
+	// Left face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, length);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-width, y, length);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-width, y, -length);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, 0, -length);
 
-	//Bottom face
-	glVertex3f(-width, 0, -length);
-	glVertex3f(width, 0, -length);
-	glVertex3f(width, 0, length);
-	glVertex3f(-width, 0, length);
+	// Right face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(width, 0, length);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, y, length);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, y, -length);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(width, 0, -length);
 
-	//Top face
-	glVertex3f(-width, y, -length);
-	glVertex3f(width, y, -length);
-	glVertex3f(width, y, length);
-	glVertex3f(-width, y, length);
+	// Bottom face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, 0, -length);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, 0, -length);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, 0, length);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, 0, length);
+
+	// Top face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-width, y, -length);
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(width, y, -length);
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(width, y, length);
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-width, y, length);
+
 	glEnd();
+
 }
 
 void pyramid(float width, float height) {
 	glBegin(GL_TRIANGLE_FAN);
+
+	// Apex (mapped to center-top of texture)
+	glTexCoord2f(0.5f, 1.0f);
 	glVertex3f(0, height, 0);
+
+	// Base corners
+	glTexCoord2f(0.0f, 0.0f);
 	glVertex3f(-width, 0, -width);
+
+	glTexCoord2f(1.0f, 0.0f);
 	glVertex3f(width, 0, -width);
+
+	glTexCoord2f(1.0f, 1.0f);
 	glVertex3f(width, 0, width);
+
+	glTexCoord2f(0.0f, 1.0f);
 	glVertex3f(-width, 0, width);
+
+	// Close the loop back to first base corner
+	glTexCoord2f(0.0f, 0.0f);
 	glVertex3f(-width, 0, -width);
+
 	glEnd();
 }
 
@@ -381,13 +439,21 @@ void tower() {
 	cube(0.22, 0.1);
 	glTranslatef(0, 0.1, 0);
 	glColor3f(0.549, 0.549, 0.510);
+	texture = loadTexture("stoneWall.bmp");
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glColor3f(1, 1, 1);
 	cube(0.18,0.15);
+	glDeleteTextures(1, &texture);
 	glTranslatef(0, 0.15, 0);
 	glColor3f(0.824, 0.824, 0.784);
 	cube(0.13,0.15);
 	glTranslatef(0, 0.15, 0);
 	glColor3f(0.274, 0.314, 0.392);
+
+	texture = loadTexture("roof.bmp");
+	glBindTexture(GL_TEXTURE_2D, texture);
 	pyramid(0.15, 0.2);
+	glDeleteTextures(1, &texture);
 	glPopMatrix();
 }
 
@@ -415,30 +481,31 @@ void bridgePart(float width, float y, float length, bool left) {
 	glVertex3f(width, y, 0);
 	glVertex3f(-width, y, 0);
 
-	//Back
+	// Back
 	glVertex3f(-width, 0, length);
 	glVertex3f(width, 0, length);
 	glVertex3f(width, y, length);
 	glVertex3f(-width, y, length);
 
-	//Sides
+	// Left side
 	glVertex3f(-width, 0, length);
 	glVertex3f(-width, y, length);
 	glVertex3f(-width, y, 0);
 	glVertex3f(-width, 0, 0);
 
+	// Right side
 	glVertex3f(width, 0, length);
 	glVertex3f(width, y, length);
 	glVertex3f(width, y, 0);
 	glVertex3f(width, 0, 0);
 
-	//Bottom face
+	// Bottom
 	glVertex3f(-width, 0, 0);
 	glVertex3f(width, 0, 0);
 	glVertex3f(width, 0, length);
 	glVertex3f(-width, 0, length);
 
-	//Top face
+	// Top
 	glVertex3f(-width, y, 0);
 	glVertex3f(width, y, 0);
 	glVertex3f(width, y, length);
@@ -455,6 +522,7 @@ void bridge() {
 	else {
 		bridgeHeight > 0 ? bridgeHeight -= bridgeSpeed : bridgeHeight = 0;
 	}
+
 
 	glPushMatrix();
 	glTranslatef(0, 0.2, -0.8);
@@ -505,6 +573,116 @@ void pillars() {
 	glPopMatrix();
 }
 
+void car() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	glPushMatrix();
+	glTranslatef(0,0.58,0);
+	glRotatef(90,0,1,0);
+	glScalef(0.5,0.5,0.5);
+	glBegin(GL_POLYGON);
+	glVertex3f(-0.3, 0.1, -0.05);
+	glVertex3f(0.3, 0.1, -0.05);
+	glVertex3f(0.3, 0.3, -0.05);
+	glVertex3f(0.1, 0.3, -0.05);
+	glVertex3f(0.1, 0.4, -0.05);
+	glVertex3f(-0.1, 0.4, -0.05);
+	glVertex3f(-0.1, 0.3, -0.05);
+	glVertex3f(-0.2, 0.3, -0.05);
+	glEnd();
+
+	glBegin(GL_POLYGON);
+	glVertex3f(-0.3, 0.1, 0.05);
+	glVertex3f(0.3, 0.1, 0.05);
+	glVertex3f(0.3, 0.3, 0.05);
+	glVertex3f(0.1, 0.3, 0.05);
+	glVertex3f(0.1, 0.4, 0.05);
+	glVertex3f(-0.1, 0.4, 0.05);
+	glVertex3f(-0.1, 0.3, 0.05);
+	glVertex3f(-0.2, 0.3, 0.05);
+	glEnd();
+
+	glColor3f(0, 0, 0);
+	glPushMatrix();
+	glTranslatef(-0.15,0.1,-0.06);
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	gluCylinder(quadric, 0.05, 0.05, 0.12, 30, 1);
+
+	glBegin(GL_TRIANGLE_FAN);
+	for (int i = 0; i < 30; i++) {
+		float theta = 2.0f * 3.1415926f * float(i) / float(30);
+		float x = 0.05 * cosf(theta);
+		float y = 0.05 * sinf(theta);
+		glVertex2f(x + 0, y + 0);
+	}
+	glEnd();
+
+	glTranslatef(0,0,0.12);
+	glBegin(GL_TRIANGLE_FAN);
+	for (int i = 0; i < 30; i++) {
+		float theta = 2.0f * 3.1415926f * float(i) / float(30);
+		float x = 0.05 * cosf(theta);
+		float y = 0.05 * sinf(theta);
+		glVertex2f(x + 0, y + 0);
+	}
+	glEnd();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.15, 0.1, -0.06);
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	gluCylinder(quadric, 0.05, 0.05, 0.12, 30, 1);
+
+	glBegin(GL_TRIANGLE_FAN);
+	for (int i = 0; i < 30; i++) {
+		float theta = 2.0f * 3.1415926f * float(i) / float(30);
+		float x = 0.05 * cosf(theta);
+		float y = 0.05 * sinf(theta);
+		glVertex2f(x + 0, y + 0);
+	}
+	glEnd();
+
+	glTranslatef(0, 0, 0.12);
+	glBegin(GL_TRIANGLE_FAN);
+	for (int i = 0; i < 30; i++) {
+		float theta = 2.0f * 3.1415926f * float(i) / float(30);
+		float x = 0.05 * cosf(theta);
+		float y = 0.05 * sinf(theta);
+		glVertex2f(x + 0, y + 0);
+	}
+	glEnd();
+	glPopMatrix();
+	glPopMatrix();
+}
+
+void cars() {
+	glPushMatrix();
+	glColor3f(1, 0, 0);
+	car();
+	glTranslatef(0,0,-0.5);
+	glColor3f(0, 1, 0);
+	car();
+	glTranslatef(0,0,-0.5);
+	glColor3f(0, 0, 1);
+	car();
+	glPopMatrix();
+}
+
+void carAnimation() {
+	carZ -= 0.1;
+	glPushMatrix();
+	glTranslatef(-0.15, 0, carZ);
+	cars();
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0.15, 0, -carZ);
+	glRotatef(180, 0, 1, 0);
+	cars();
+	glPopMatrix();
+}
+
 void project() {
 	foundation();
 	glPushMatrix();
@@ -514,6 +692,13 @@ void project() {
 	road();
 	bridge();
 	glPopMatrix();
+	if (carVisible) {
+		carAnimation();
+		if (carZ < -6) {
+			carVisible = false;
+			carZ = 7;
+		}
+	}
 }
 
 void projection() {
@@ -539,10 +724,8 @@ void display()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	projection();
-	
 
 	project();
-
 }
 //--------------------------------------------------------------------
 

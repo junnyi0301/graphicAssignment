@@ -39,7 +39,7 @@ float maxLegAngle = 10.0f; // max swing
 float maxArmAngle = 20.0f;
 
 //Light
-float x = 0.8, y = 0, z = -1;
+float x = 0.7, y = -0.5, z = -1;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -251,7 +251,6 @@ void palm() {
 	glPopMatrix();
 	
 }
-
 void fingers(bool left) {
 
 	//Pinky finger
@@ -303,6 +302,7 @@ void fingers(bool left) {
 	glPopMatrix();
 
 }
+
 void hand(bool left) {
 	glPushMatrix();
 	glTranslatef(0, 0.15, 0.015);
@@ -596,8 +596,29 @@ void feet() {
 	glPopMatrix();
 }
 
+void head() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	gluQuadricDrawStyle(quadric, drawstyle);
+	glPushMatrix();
+	glTranslatef(0,0.25,-0.05);
+	glScalef(0.7,0.7,0.5);
+	gluSphere(quadric, 0.3, 30, 30);
+	glPopMatrix();
+
+	glPushMatrix();
+	glTranslatef(0, 0.3, 0);
+	gluSphere(quadric, 0.2, 30, 30);
+	glPopMatrix();
+
+	gluDeleteQuadric(quadric);
+}
+
 void lighting() {
-	glEnable(GL_LIGHTING);
+
+	//glEnable(GL_LIGHTING);
+
 	// White diffuse + ambient + specular light
 	GLfloat lightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // diffuse color
 	GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // soft ambient light
@@ -661,6 +682,7 @@ void display()
 		rightLegAngle = 0;
 	}
 
+	head();
 	arms();
 	body();
 	feet();

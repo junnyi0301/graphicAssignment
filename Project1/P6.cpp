@@ -1,25 +1,24 @@
 #include <Windows.h>
 #include <gl/GL.h>
-#include <math.h>
-#include <GL/glu.h>
-
+#include <gl/GLU.h>
 
 #pragma comment (lib, "OpenGL32.lib")
 
-#define WINDOW_TITLE "OpenGL Window"
+#define WINDOW_TITLE "Practical 6"
 
-float x = 0.8, y = 0, z = 0;
-float ambL[3] = { 1.0, 1.0, 1.0 }; // White color amb light
-float posA[3] = { x, y, z };  //amb light position { 0.0, 0.8, 0.0 }
-float difL[3] = { 1.0, 1.0, 1.0 }; // white color diffuse light
-float posD[3] = { x, y, z };  //dif light position { 0.8, 0.0, 0.0 }
-float ambM[3] = { 0.0, 0.0, 1.0 }; //blue color amb material
-float difM[3] = { 0.0, 0.0, 1.0 }; //blue color dif material
+float ambL[3] = { 1.0, 1.0, 1.0 };		//red color amb light
+float posA[3] = { 0.0, 0.8, 0.0 };		//amb light position UP (0.0, 0.8, 0.0)
+float difL[3] = { 1.0, 1.0, 1.0 };		//green color diffuse light 
+float posB[3] = { 0.8, 0.0, 0.0 };		//dif light position RIGHT (0.8, 0.0, 0.0)
+float ambM[3] = { 0.0, 0.0, 1.0 };		//blue color amb material
+float difM[3] = { 0.0, 0.0, 1.0 };		//blue color dif material
+float x = 0, y = 0, z = 0, moveSpeed = 0.1; //light move speed
+float posD[3] = { x, y, z };
+bool isLightOn = false;					//is light on?
+float rotAngle = 0.0f, rotSpeed = 0.0f;
+const float kSpin = 0.6f;
 
-bool isLightOn = true;
-bool clockwise = true;
-
-int page = 1;
+bool drawSphereNow = true;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -30,30 +29,31 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		break;
 
 	case WM_KEYDOWN:
-		if (wParam == VK_ESCAPE)
-			PostQuitMessage(0);
+		if (wParam == VK_ESCAPE) PostQuitMessage(0);
+		else if (wParam == 'W')
+			y += moveSpeed;
+		else if (wParam == 'S')
+			y -= moveSpeed;
+		else if (wParam == 'A')
+			x -= moveSpeed;
+		else if (wParam == 'D')
+			x += moveSpeed;
+		else if (wParam == 'E')
+			z += moveSpeed;
+		else if (wParam == 'Q')
+			z -= moveSpeed;
+		else if (wParam == VK_UP) {
+			rotSpeed = +0.1f;
+		}
+		else if (wParam == VK_DOWN) {
+			rotSpeed = -0.1f;
+		}
 		else if (wParam == VK_SPACE)
 			isLightOn = !isLightOn;
-		else if (wParam == 'W')
-			posD[1] += 0.5;
-		else if (wParam == 'S')
-			posD[1] -= 0.5;
-		else if (wParam == 'A')
-			posD[0] -= 0.5;
-		else if (wParam == 'D')
-			posD[0] += 0.5;
-		else if (wParam == 'E')
-			posD[2] -= 0.5;
-		else if (wParam == 'Q')
-			posD[2] += 0.5;
-		else if (wParam == VK_UP)
-			clockwise = true;
-		else if (wParam == VK_DOWN)
-			clockwise = false;
 		else if (wParam == 'O')
-			page = 1;
+			drawSphereNow = true;
 		else if (wParam == 'P')
-			page = 2;
+			drawSphereNow = false;
 		break;
 
 	default:
@@ -96,94 +96,111 @@ bool initPixelFormat(HDC hdc)
 }
 //--------------------------------------------------------------------
 
-void sphere(double r) {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
-
-	//gluQuadricDrawStyle(quadric, GLU_LINE);
-	//glRotatef(0.03, 1, 0, 0);
-	glColor3f(0.2, 0.4, 0.8);
-	gluSphere(quadric, r, 30, 30);
-
+void drawSphere(double r) {
+	GLUquadricObj* sphere = NULL;			//create quadric obj pointer
+	sphere = gluNewQuadric();				//create the quadric obj in the memory
+	gluQuadricDrawStyle(sphere, GLU_FILL);	//set to line draw style
+	gluSphere(sphere, r, 30, 30);			//draw sphere
+	gluDeleteQuadric(sphere);				//delete the quardric
 }
 
-void drawPyramid(float size)
-{
-	glLineWidth(3.0);
-	glBegin(GL_LINE_STRIP);
-	glColor3f(0, 1, 0.0);
-	glVertex3f(0, size / 2, 0);
-	glVertex3f(-size / 2, -size / 2, -size / 2);
-	glVertex3f(size / 2, -size / 2, -size / 2);
-	glVertex3f(0, size / 2, 0);
-	glVertex3f(size / 2, -size / 2, -size / 2);
-	glVertex3f(size / 2, -size / 2, size / 2);
-	glVertex3f(0, size / 2, 0);
-	glVertex3f(size / 2, -size / 2, size / 2);
-	glVertex3f(-size / 2, -size / 2, size / 2);
-	glVertex3f(0, size / 2, 0);
+void  drawPyramid() {
+	//Front
+	glNormal3f(0.0f, 0.0f, 1.0f);
+	glBegin(GL_TRIANGLES);
+	glColor3f(1.0f, 0.2f, 0.8f);
+	glVertex3f(-0.25f, -0.25f, 0.0f);
+	glVertex3f(0.25f, -0.25f, 0.0f);
+	glVertex3f(0.0f, 0.25f, -0.25f);
 	glEnd();
 
-	glBegin(GL_TRIANGLE_FAN);
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex3f(0, size/2, 0);
-	glVertex3f(-size/2, -size/2, -size/2);
-	glVertex3f(size/2, -size / 2, -size/2);
-	glVertex3f(size/2, -size / 2, size/2);
-	glVertex3f(-size/2, -size / 2, size/2);
-	glVertex3f(-size / 2, -size / 2, -size / 2);
+	//Right
+	glNormal3f(1.0f, 0.0f, 0.0f);
+	glBegin(GL_TRIANGLES);
+	glColor3f(1.0f, 0.2f, 0.8f);
+	glVertex3f(0.25f, -0.25f, 0.0f);
+	glVertex3f(0.25f, -0.25f, -0.5f);
+	glVertex3f(0.0f, 0.25f, -0.25f);
 	glEnd();
 
+	// Back
+	glNormal3f(0.0f, 0.0f, -1.0f);
+	glBegin(GL_TRIANGLES);
+	glColor3f(1.0f, 0.2f, 0.8f);
+	glVertex3f(0.25f, -0.25f, -0.5f);   // right-back base
+	glVertex3f(-0.25f, -0.25f, -0.5f);   // left-back base
+	glVertex3f(0.0f, 0.25f, -0.25f);  // apex
+	glEnd();
+
+	// Left
+	glNormal3f(-1.0f, 0.0f, 0.0f);
+	glBegin(GL_TRIANGLES);
+	glColor3f(1.0f, 0.2f, 0.8f);
+	glVertex3f(-0.25f, -0.25f, -0.5f);
+	glVertex3f(-0.25f, -0.25f, 0.0f);
+	glVertex3f(0.0f, 0.25f, -0.25f);
+	glEnd();
+
+	// Base (quad)
 	glBegin(GL_QUADS);
-	glVertex3f(-size / 2, -size / 2, -size / 2);
-	glVertex3f(size / 2, -size / 2, -size / 2);
-	glVertex3f(size / 2, -size / 2, size / 2);
-	glVertex3f(-size / 2, -size / 2, size / 2);
+	glNormal3f(0.0f, -1.0f, 0.0f);
+	glColor3f(1.0f, 0.2f, 0.8f);
+	glVertex3f(-0.25f, -0.25f, 0.0f);
+	glVertex3f(0.25f, -0.25f, 0.0f);
+	glVertex3f(0.25f, -0.25f, -0.5f);
+	glVertex3f(-0.25f, -0.25f, -0.5f);
 	glEnd();
 }
 
-void lighting() {
-	if (isLightOn) {
-		glEnable(GL_LIGHTING);
-	}
-	else {
-		glDisable(GL_LIGHTING);
-	}
+void lightning() {
+	posD[0] = x; posD[1] = y; posD[2] = z;
 
-	//Light 0: White color amb light at posA above sphere (0.0, 0.8, 0.0)
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambL); //red color amb light
-	glLightfv(GL_LIGHT0, GL_POSITION, posA);
-	//glEnable(GL_LIGHT0); // off when light 1 on
+	if (isLightOn) glEnable(GL_LIGHTING);
+	else           glDisable(GL_LIGHTING);
 
-	//Light 1: White color dif light at pos (0.8, 0.0, 0.0) right sphere
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, difL); //red color amb light
-	glLightfv(GL_LIGHT1, GL_POSITION, posD);
-	glEnable(GL_LIGHT1);
+	GLfloat amb4[] = { ambL[0], ambL[1], ambL[2], 1.0f };
+	GLfloat dif4[] = { difL[0], difL[1], difL[2], 1.0f };
+	GLfloat pos4[] = { posD[0], posD[1], posD[2], 1.0f }; // ? uses W/A/S/D/E/Q
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT, amb4);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, dif4);
+	glLightfv(GL_LIGHT0, GL_POSITION, pos4);
+	glEnable(GL_LIGHT0);
 }
 
 void display()
 {
-	glClearColor(1,1,1,0);
+	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
-
-	lighting();
+	glEnable(GL_NORMALIZE);
 
 	glMatrixMode(GL_MODELVIEW);
-	if (clockwise)
-		glRotatef(-0.1, 1.0, 1.0, 1.0);
-	else
-		glRotatef(0.1, 1.0, 1.0, 1.0);
-	//glMaterialfv(GL_FRONT, GL_AMBIENT, ambM); // red color amb material
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, difM);
+	glLoadIdentity();      // reset so last frame’s rotation doesn’t affect the light
+	lightning();           // place the (moving) light using x,y,z
 
-	if (page == 1)
-		sphere(0.5);
-	else if (page == 2)
-		drawPyramid(0.8);
+	// REMOVE these 6 lines from your original display() (they overwrite the moving light):
+	// glLightfv(GL_LIGHT0, GL_AMBIENT, ambL);
+	// glLightfv(GL_LIGHT0, GL_POSITION, posA);
+	// glEnable(GL_LIGHT0);
+	// glLightfv(GL_LIGHT1, GL_DIFFUSE, difL);
+	// glLightfv(GL_LIGHT1, GL_POSITION, posB);
+	// glEnable(GL_LIGHT1);
 
+	// Make Up/Down effective (fixed speed, direction set by keys)
+	rotAngle += rotSpeed;
+	glRotatef(rotAngle, 1.0f, 1.0f, 1.0f); // rotate about all axes
 
+	// Material (ensure diffuse is set so light is visible)
+	GLfloat ambMat4[] = { ambM[0], ambM[1], ambM[2], 1.0f };
+	GLfloat difMat4[] = { 1.0f,    1.0f,    1.0f,    1.0f };
+	glMaterialfv(GL_FRONT, GL_AMBIENT, ambMat4);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, difMat4);
+
+	if (drawSphereNow) drawSphere(0.5);
+	else               drawPyramid();
 }
+
 //--------------------------------------------------------------------
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
@@ -200,7 +217,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	if (!RegisterClassEx(&wc)) return false;
 
 	HWND hWnd = CreateWindow(WINDOW_TITLE, WINDOW_TITLE, WS_OVERLAPPEDWINDOW,
-		700, 10, 500, 500,
+		900, 10, 300, 300,
 		NULL, NULL, wc.hInstance, NULL);
 
 	//--------------------------------
