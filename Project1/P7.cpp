@@ -12,6 +12,7 @@ int qNo = 1;
 // Fixed indices for textures
 enum { TEX_BOX = 0, TEX_METAL = 1, TEX_BRICK = 2, TEX_COUNT = 3 };
 GLuint textureArr[TEX_COUNT] = { 0,0,0 };
+GLuint texture = 0;
 int currentTex = TEX_BOX;
 
 const char* TEX_FILE[TEX_COUNT] = { "Box.bmp", "Metal.bmp", "Brick.bmp" };
@@ -41,6 +42,7 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
         if (wParam == VK_ESCAPE) PostQuitMessage(0);
         else if (wParam == '1') qNo = 1;
         else if (wParam == '2') qNo = 2;
+        else if (wParam == '3') qNo = 3;
         else if (wParam == 'A') { currentTex = TEX_BOX;  ensureTex(TEX_BOX); }
         else if (wParam == 'S') { currentTex = TEX_METAL; ensureTex(TEX_METAL); }
         else if (wParam == 'D') { currentTex = TEX_BRICK; ensureTex(TEX_BRICK); }
@@ -173,29 +175,39 @@ void P7Q2() {
     glPopMatrix();
 }
 
-// ------------------------------------------------
-// Robust BMP loader (24-bit BGR or 32-bit BGRA)
-#ifndef GL_BGR_EXT
-#define GL_BGR_EXT 0x80E0
-#endif
-#ifndef GL_BGRA_EXT
-#define GL_BGRA_EXT 0x80E1
-#endif
+void drawCyclinder() {
+    GLUquadricObj* quadric = NULL;
+    quadric = gluNewQuadric();
+
+    glColor3f(1, 1, 0);
+    texture = loadTexture("stoneWall.bmp");
+    gluQuadricTexture(quadric, texture);
+    gluQuadricDrawStyle(quadric, GLU_FILL);
+    gluSphere(quadric, 0.5, 30, 10);
+    glDeleteTextures(1, &texture);
+}
+
+void drawSphere() {
+    GLUquadricObj* quadric = NULL;
+    quadric = gluNewQuadric();
+
+    gluQuadricDrawStyle(quadric, GLU_FILL);
+    gluQuadricTexture(quadric, true);
+    gluSphere(quadric, 0.5, 30, 10);
+    gluDeleteQuadric(quadric);
+}
+
+void P7Q3() {
+    textureArr[0] = loadTexture("Box.bmp");
+    drawSphere();
+    glDeleteTextures(1, &textureArr[0]);
+
+}
 
 GLuint loadTexture(LPCSTR filename) {
     // Load BMP via GDI
     HBITMAP hBMP = (HBITMAP)LoadImageA(GetModuleHandleA(NULL),
         filename, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION | LR_LOADFROMFILE);
-
-    if (!hBMP) {
-        char msg[512];
-        wsprintfA(msg,
-            "Failed to load %s\n\nTips:\n• Put the BMP next to your .exe (e.g. Debug\\)\n• Ensure it's a real .bmp (24-bit or 32-bit).",
-            filename);
-        MessageBoxA(NULL, msg, "LoadImage error", MB_ICONERROR | MB_OK);
-        return 0;
-    }
-
     BITMAP bmp;
     GetObject(hBMP, sizeof(BITMAP), &bmp);
 
@@ -241,6 +253,7 @@ void display()
     switch (qNo) {
     case 1: P7Q1(); break;
     case 2: P7Q2(); break;
+    case 3: P7Q3(); break;
     default: P7Q1(); break;
     }
 

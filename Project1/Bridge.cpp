@@ -9,7 +9,7 @@
 
 //Camera movement
 float ptx = 0, pty = 0, pRy = 0, pRx = 0, pRz = 1;
-float bridgeHeight = 0, bridgeSpeed = 0.5;
+float bridgeHeight = 0, bridgeSpeed = 1;
 bool up = false;
 bool carVisible = false;
 float carZ = 7;
@@ -670,7 +670,7 @@ void cars() {
 }
 
 void carAnimation() {
-	carZ -= 0.1;
+	carZ -= 0.5;
 	glPushMatrix();
 	glTranslatef(-0.15, 0, carZ);
 	cars();
@@ -683,7 +683,20 @@ void carAnimation() {
 	glPopMatrix();
 }
 
+void sun() {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+
+	glColor3f(1,1,0);
+	gluQuadricDrawStyle(quadric, GLU_FILL);
+	gluSphere(quadric, 0.5, 30, 10);
+}
+
 void project() {
+	glPushMatrix();
+	glTranslatef(-3,5,0);
+	sun();
+	glPopMatrix();
 	foundation();
 	glPushMatrix();
 	glTranslatef(0,0.3,0);

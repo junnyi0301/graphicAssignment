@@ -2,25 +2,34 @@
 #include <gl/GL.h>
 #include <math.h>
 #include <GL/glu.h>
-#include <string>
+#include <chrono>
 
 #pragma comment (lib, "OpenGL32.lib")
 
 #define WINDOW_TITLE "OpenGL Window"
+
+auto lastTime = std::chrono::high_resolution_clock::now();
+
+//Menu
+int menu = 1;
 
 //Style
 GLenum drawstyle = GLU_FILL;
 
 //Camera movement
 float ptx = 0, pty = 0, pRy = 0, pRx = 0, pRz = 1;
+bool perspective = true;
 
 //Object movement
 float tRx = 0, tRy = 0;
 
 //Arm movement
 bool leftArmMovement = true;
-float leftX = 0, rightX = 0;
-float armMaxHeight = 180, armSpeed = 5, armMinHeight = -45;
+bool smallArmMovement = false;
+float forearmMaxHeight = 135, forearmMinHeight = 0;
+float bicepMaxHeight = 180, bicepMinHeight = -45;
+float leftBicep = 0, rightBicep = 0, rightForearm = 45, leftForearm = 45;
+float armSpeed = 5;
 
 //Walking Animation
 float leftLegAngle = 0.0f;
@@ -40,6 +49,20 @@ float maxArmAngle = 20.0f;
 
 //Light
 float x = 0.7, y = -0.5, z = -1;
+bool isLightOn = true;
+
+float getDeltaTime() {
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> delta = currentTime - lastTime;
+	lastTime = currentTime;
+	return delta.count(); // seconds
+}
+
+void update(float angle, float speed) {
+	
+	float dt = getDeltaTime();
+	angle += speed * dt;
+}
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -52,51 +75,89 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE)
 			PostQuitMessage(0);
-		else if (wParam == 'A')
-			pRy += 0.1;
-		else if (wParam == 'D')
-			pRy -= 0.1;
-		else if (wParam == 'W')
-			pRx += 0.1;
-		else if (wParam == 'S')
-			pRx -= 0.1;
-		else if (wParam == 'E')
-			pRz += 0.1;
-		else if (wParam == 'Q')
-			pRz -= 0.1;
-		else if (wParam == 'I')
-			y += 0.1;
-		else if (wParam == 'K')
-			y -= 0.1;
-		else if (wParam == 'J')
-			x += 0.1;
-		else if (wParam == 'L')
-			x -= 0.1;
-		else if (wParam == 'U')
-			z -= 0.1;
-		else if (wParam == 'O')
-			z += 0.1;
-		else if (wParam == 'P')
+
+		//Camera and light movement
+		switch (menu) {
+		case 1:
+			if (wParam == 'A')
+				pRy += 0.1;
+			else if (wParam == 'D')
+				pRy -= 0.1;
+			else if (wParam == 'W')
+				pRx += 0.1;
+			else if (wParam == 'S')
+				pRx -= 0.1;
+			else if (wParam == 'E')
+				pRz += 0.1;
+			else if (wParam == 'Q')
+				pRz -= 0.1;
+			break;
+		case 2:
+			if (wParam == 'A')
+				x += 0.1;
+			else if (wParam == 'D')
+				x -= 0.1;
+			else if (wParam == 'W')
+				y += 0.1;
+			else if (wParam == 'S')
+				y -= 0.1;
+			else if (wParam == 'E')
+				z += 0.1;
+			else if (wParam == 'Q')
+				z -= 0.1;
+			break;
+		default:
+			break;
+		}
+
+		//Menu selection
+		if (wParam == 0x31)
+			menu = 1;
+		else if (wParam == 0x32)
+			menu = 2;
+			
+		//Body movement
+		if (wParam == 'P')
 			leftArmMovement = !leftArmMovement;
 		else if (wParam == 'M') {
 			isWalking = !isWalking;
-			leftX = 0;
-			rightX = 0;
+			leftForearm = 45;
+			rightForearm = 45;
+			leftBicep = 0;
+			rightBicep = 0;
 		}
 		else if (wParam == VK_UP)
-			leftArmMovement ? leftX < armMaxHeight ? leftX += armSpeed : leftX = armMaxHeight : rightX < armMaxHeight ? rightX += armSpeed : rightX = armMaxHeight;
+			switch (smallArmMovement) {
+			case false:
+				leftArmMovement ? leftBicep < bicepMaxHeight ? leftBicep += armSpeed : leftBicep = bicepMaxHeight : rightBicep < bicepMaxHeight ? rightBicep += armSpeed : rightBicep = bicepMaxHeight;
+				break;
+			case true:
+				leftArmMovement ? leftForearm < forearmMaxHeight ? leftForearm += armSpeed : leftForearm = forearmMaxHeight : rightForearm < forearmMaxHeight ? rightForearm += armSpeed : rightForearm = forearmMaxHeight;
+				break;
+			}
 		else if (wParam == VK_DOWN)
-			leftArmMovement ? leftX > armMinHeight ? leftX -= armSpeed : leftX = armMinHeight : rightX > armMinHeight ? rightX -= armSpeed : rightX = armMinHeight;
-		else if (wParam == VK_LEFT)
-			tRx -= 3;
-		else if (wParam == VK_RIGHT)
-			tRx += 3;
+			switch (smallArmMovement) {
+			case false:
+				leftArmMovement ? leftBicep > bicepMinHeight ? leftBicep -= armSpeed : leftBicep = bicepMinHeight : rightBicep > bicepMinHeight ? rightBicep -= armSpeed : rightBicep = bicepMinHeight;
+				break;
+			case true:
+				leftArmMovement ? leftForearm > forearmMinHeight ? leftForearm -= armSpeed : leftForearm = forearmMinHeight : rightForearm > forearmMinHeight ? rightForearm -= armSpeed : rightForearm = forearmMinHeight;
+				break;
+			}
+		else if (wParam == 'O') {
+			smallArmMovement = !smallArmMovement;
+		}
+		else if (wParam == 'L') {
+			isLightOn = !isLightOn;
+		}
 		else if (wParam == VK_SPACE) {
 			pRx = 0;
 			pRy = 0;
 			pRz = 1;
-			leftX = 0;
-			rightX = 0;
+			leftForearm = 45;
+			rightForearm = 45;
+			leftBicep = 0;
+			rightBicep = 0;
 			x = 0.7;
 			y = -0.5;
 			z = -1;
@@ -142,32 +203,66 @@ bool initPixelFormat(HDC hdc)
 }
 //--------------------------------------------------------------------
 
-//Arm Parts
-void fingerPart() {
+void drawSphere(float radius) {
+	GLUquadricObj* quadric = NULL;
+	quadric = gluNewQuadric();
+	gluQuadricDrawStyle(quadric, drawstyle);
+	gluSphere(quadric, radius, 30, 30);
+	gluDeleteQuadric(quadric);
+}
+
+void drawCyclinder(float topRadius, float bottomRadius, float height, float slice = 10) {
 	GLUquadricObj* quadric = NULL;
 	quadric = gluNewQuadric();
 
+	gluQuadricDrawStyle(quadric, drawstyle);
+	gluCylinder(quadric, topRadius, bottomRadius, height, slice, 3);
+}
+
+void drawCircle(float radius, float angleDeg = 360.0f, bool fill = true) {
+	int segments = 30; // higher value = smoother circle
+
+	if (fill) {
+		glBegin(GL_TRIANGLE_FAN);
+		glVertex2f(0.0f, 0.0f); // center point of fan
+		for (int i = 0; i <= segments; i++) {
+			// convert to radians
+			float theta = (angleDeg * i / segments) * 3.1415926f / 180.0f;
+			float x = radius * cosf(theta);
+			float y = radius * sinf(theta);
+			glVertex2f(x, y);
+		}
+		glEnd();
+	}
+	else {
+		glBegin(GL_LINE_STRIP);
+		for (int i = 0; i <= segments; i++) {
+			float theta = (angleDeg * i / segments) * 3.1415926f / 180.0f;
+			float x = radius * cosf(theta);
+			float y = radius * sinf(theta);
+			glVertex2f(x, y);
+		}
+		glEnd();
+	}
+}
+
+
+//Arm Parts
+void fingerPart() {
 	glPushMatrix();
 	glRotatef(90, 1, 0, 0);
-	glPushMatrix();
 	glScalef(0.1, 0.1, 0.5);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.2, 0.2, 0.1, 10, 1);
-	gluDeleteQuadric(quadric);
-	glPopMatrix();
+	drawCyclinder(0.2, 0.2, 0.1);
 	glPopMatrix();
 }
 void fingerTip() {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
+	
 
 	glPushMatrix();
 	glScalef(0.8, 0.8, 0.8);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	glLineWidth(2);
-	gluSphere(quadric, 0.02, 30, 30);
+	drawSphere(0.02);
 	glPopMatrix();
-	gluDeleteQuadric(quadric);
+	
 }
 void finger(bool left) {
 
@@ -225,31 +320,25 @@ void index(bool left) {
 	finger(left);
 	glPopMatrix();
 }
-void cyclinder() {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
-
-	glPushMatrix();
-	glRotatef(90, 1, 0, 0);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.15, 0.2, 0.2, 10, 1);
-	glPopMatrix();
-
-	gluDeleteQuadric(quadric);
-}
+//void cyclinder() {
+//	GLUquadricObj* quadric = NULL;
+//	quadric = gluNewQuadric();
+//
+//	glPushMatrix();
+//	glRotatef(90, 1, 0, 0);
+//	gluQuadricDrawStyle(quadric, drawstyle);
+//	gluCylinder(quadric, 0.15, 0.2, 0.2, 10, 1);
+//	glPopMatrix();
+//
+//	gluDeleteQuadric(quadric);
+//}
 void palm() {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
-
 	glPushMatrix();
 	glTranslatef(0, -0.15, 0);
-	glScalef(0.5, 0.7, 0.16);
+	glScalef(0.4, 0.8, 0.16);
 	glRotatef(-90, 1, 0, 0);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.2, 0.15, 0.15, 10, 1);
-	gluDeleteQuadric(quadric);
+	drawCyclinder(0.2, 0.15, 0.15);
 	glPopMatrix();
-	
 }
 void fingers(bool left) {
 
@@ -303,29 +392,6 @@ void fingers(bool left) {
 
 }
 
-void hand(bool left) {
-	glPushMatrix();
-	glTranslatef(0, 0.15, 0.015);
-	palm();
-	glPopMatrix();
-
-	fingers(left);
-
-}
-void sleeve(bool left) {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
-
-	glPushMatrix();
-	glTranslatef(0, 0.5, 0.01);
-	glRotatef(left ? -15 : 15, 0, 0, 1);
-	glRotatef(90, 1, 0, 0);
-	glScalef(0.2, 0.15, 0.5);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.4, 0.7, 0.8, 10, 3);
-	glPopMatrix();
-}
-
 void weapon() {
 	GLUquadricObj* quadric = NULL;
 	quadric = gluNewQuadric();
@@ -333,7 +399,7 @@ void weapon() {
 	glPolygonOffset(1.0, 1.0);
 
 	//Handle
-	glColor3f(0.25,0,0);
+	glColor3f(0.25, 0, 0);
 	glPushMatrix();
 	glTranslatef(0, 0.25, 0);
 	glRotatef(90, 1, 0, 0);
@@ -395,42 +461,95 @@ void weapon() {
 	gluDeleteQuadric(quadric);
 }
 
+void hand(bool left) {
+	glPushMatrix();
+	glTranslatef(0, 0.15, 0.015);
+	palm();
+	glPopMatrix();
+
+	fingers(left);
+
+}
+void sleeve(bool left) {
+	glPushMatrix();
+	glTranslatef(0, 0.5, 0.01);
+	if (!left) {
+		glRotatef(rightBicep, 1, 0, 0); //Bicep movement
+	}
+	else {
+		glRotatef(leftBicep, 1, 0, 0); //Bicep movement
+	}
+	glRotatef(90, 1, 0, 0);
+	glRotatef(left ? -15 : 15, 0, 1, 0);
+	glScalef(0.2, 0.15, 0.5);
+	drawCyclinder(0.4, 0.7, 0.4);
+	glPopMatrix();
+}
+
 
 void arm(bool left) {
 
 	glColor3f(0.9, 0.9, 0.9);
 	sleeve(left);
-	
-	glPushMatrix();
-	glTranslatef(left ? -0.08 : 0.08,0.02,0);
-	glRotatef(left ? -15 : 15, 0, 0, 1);
-	glRotatef(left ? 70 : -90, 0, 1, 0);
-	glScalef(0.7,0.7,0.7);
 	glColor3f(0.97, 0.97, 0.8);
-	hand(left);
-	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(0, 0.5, 0.01);
+	glRotatef(90, 1, 0, 0);
 
 	if (!left) {
-		glPushMatrix();
-		glTranslatef(0.04, 0.03, -0.25);
-		glRotatef(-90, 1, 0, 0);
-		weapon();
-		glPopMatrix();
+		glRotatef(rightBicep, 1, 0, 0); //Bicep movement
 	}
+	else {
+		glRotatef(leftBicep, 1, 0, 0); //Bicep movement
+	}
+	glRotatef(left ? -10 : 10, 0, 1, 0);
+	drawCyclinder(0.05, 0.05, 0.2);
+	glTranslatef(0, 0, 0.2);
+	drawSphere(0.05);
+	if (!left) {
+		glRotatef(rightForearm, 1, 0, 0); //Forearm movement
+	}
+	else {
+		glRotatef(leftForearm, 1, 0, 0); //Forearm movement
+	}
+	glRotatef(left ? 8 : -8, 0, 1, 0);
+	drawCyclinder(0.05, 0.02, 0.2);
+
+	glTranslatef(0, 0, 0.2);
+	drawSphere(0.02);
+	glTranslatef(left ? -0.01 : 0.01, 0, 0.08);
+	//glRotatef(left ? -15 : 15, 0, 0, 1);
+	//glRotatef(left ? 70 : -90, 0, 1, 0);
+	glRotatef(left ? -90 : 90, 0, 0, 1);
+	glRotatef(-90, 1, 0, 0);
+	glScalef(0.6, 0.6, 0.6);
+	hand(left);
+
+	if (!left) {
+		glTranslatef(-0.45, 0.03, 0.05);
+		glScalef(1.4, 1.4, 1.4);
+		glRotatef(90, 0, 0, 1);
+		weapon();
+	}
+	glPopMatrix();
 }
 
 
 void arms() {
 	glPushMatrix();
 	glTranslatef(-0.3, 0, 0);
-	glRotatef(leftArmAngle + leftX, 1, 0, 0);
+	glColor3f(0.97, 0.97, 0.8);
+	drawSphere(0.05);
+	glRotatef(leftArmAngle, 1, 0, 0);
 	glTranslatef(0, -0.5, 0);
 	arm(true);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(0.3, 0, 0);
-	glRotatef(rightArmAngle + rightX, 1, 0, 0);
+	glColor3f(0.97, 0.97, 0.8);
+	drawSphere(0.05);
+	glRotatef(rightArmAngle, 1, 0, 0);
 	glTranslatef(0, -0.5, 0);
 	arm(false);
 	glPopMatrix();
@@ -438,17 +557,13 @@ void arms() {
 
 //Body
 void torso() {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
-
 	//Chest
 	glColor3f(0.9, 0.9, 0.9);
 	glPushMatrix();
 	glTranslatef(0, -0.05, 0);
 	glRotatef(90, 1, 0, 0);
 	glScalef(1,0.7,1);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.25, 0.25, 0.25, 10, 1);
+	drawCyclinder(0.25, 0.23, 0.25);
 	glPopMatrix();
 
 	//Waits
@@ -457,8 +572,7 @@ void torso() {
 	glTranslatef(0, -0.3, 0);
 	glRotatef(90, 1, 0, 0);
 	glScalef(1, 0.7, 1);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.25, 0.25, 0.05, 10, 1);
+	drawCyclinder(0.23, 0.23, 0.05);
 	glPopMatrix();
 
 	//Lower
@@ -467,27 +581,19 @@ void torso() {
 	glTranslatef(0,-0.35,0);
 	glRotatef(90, 1, 0, 0);
 	glScalef(1, 0.7, 1);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.25, 0.35, 0.45, 10, 1);
+	drawCyclinder(0.23, 0.35, 0.45);
 	glPopMatrix();
-
-	gluDeleteQuadric(quadric);
 }
 
 void hoodie() {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
 
 	glColor3f(0, 0.77, 1);
 	glPushMatrix();
 	glTranslatef(0, -0.05, 0);
 	glRotatef(-90, 1, 0, 0);
 	glScalef(1.3, 0.8, 1);
-	gluQuadricDrawStyle(quadric, drawstyle);
-	gluCylinder(quadric, 0.19, 0.3, 0.08, 10, 1);
+	drawCyclinder(0.19, 0.3, 0.08);
 	glPopMatrix();
-
-	gluDeleteQuadric(quadric);
 
 }
 
@@ -540,6 +646,9 @@ void foot() {
 }
 
 void updateWalk() {
+	rightForearm = 45;
+	leftForearm = 45;
+
 	// ---- Left leg ----
 	if (leftLegForward) {
 		leftLegAngle += stepSpeed;
@@ -596,53 +705,126 @@ void feet() {
 	glPopMatrix();
 }
 
+void neck() {
+	glColor3f(0.97, 0.97, 0.8);
+	glPushMatrix();
+	glRotatef(90,1,0,0);
+	glScalef(1.5,0.9,1);
+	drawCircle(0.2);
+	glPopMatrix();
+
+	glPushMatrix();
+	glRotatef(-90, 1, 0, 0);
+	drawCyclinder(0.1,0.08,0.1);
+	glPopMatrix();
+}
+
+void mouth() {
+
+}
+
+void eye() {
+	glColor3f(1, 1, 1);
+	glPushMatrix();
+	glTranslatef(0.08,0.25,-0.27);
+	glRotatef(180, 0, 0, 1);
+	glRotatef(12, 0, 1, 0);
+	glScalef(0.2,0.25,1);
+	drawCircle(0.2);
+	glColor3f(0, 0, 0);
+	glTranslatef(0, 0.05, -0.01);
+	glScalef(0.7, 0.7, 1);
+	drawCircle(0.2);
+	glLineWidth(5);
+	glTranslatef(0.2, -0.2, -0.01);
+	glRotatef(-80, 0, 0, 1);
+	glScalef(1.5, 3, 1);
+	drawCircle(0.2, -45, false);
+	glPopMatrix();
+
+	glColor3f(1, 1, 1);
+	glPushMatrix();
+	glTranslatef(-0.08,0.25,-0.27);
+	glRotatef(180, 0, 0, 1);
+	glRotatef(-12, 0, 1, 0);
+	glScalef(0.2,0.25,1);
+	drawCircle(0.2);
+	glColor3f(0, 0, 0);
+	glTranslatef(0, 0.05, -0.01);
+	glScalef(0.7, 0.7, 1);
+	drawCircle(0.2);
+	glLineWidth(5);
+	glTranslatef(-0.2, -0.2, -0.01);
+	glRotatef(80, 0, 0, 1);
+	glRotatef(180, 0, 1, 0);
+	glScalef(1.5, 3, 1);
+	drawCircle(0.2, -45, false);
+	glPopMatrix();
+}
+
 void head() {
-	GLUquadricObj* quadric = NULL;
-	quadric = gluNewQuadric();
-
-	gluQuadricDrawStyle(quadric, drawstyle);
+	glColor3f(0.97, 0.97, 0.8);
 	glPushMatrix();
-	glTranslatef(0,0.25,-0.05);
-	glScalef(0.7,0.7,0.5);
-	gluSphere(quadric, 0.3, 30, 30);
+	glTranslatef(0, 0.13, 0);
+	glScalef(1, 1, 0.9);
+	glRotatef(-90, 1, 0, 0);
+	drawCyclinder(0.25, 0.27, 0.1);
+	glTranslatef(0, 0, 0.1);
+	drawCyclinder(0.27, 0.3, 0.05);
+	glTranslatef(0, 0, 0.05);
+	drawCyclinder(0.3, 0.32, 0.05);
+	glTranslatef(0, 0, 0.05);
+	drawCyclinder(0.32, 0.33, 0.1);
+	glTranslatef(0, 0, 0.1);
+	drawCyclinder(0.33, 0.3, 0.1);
+	glTranslatef(0, 0, 0.1);
+	drawCyclinder(0.3, 0.25, 0.05);
+	glTranslatef(0, 0, 0.05);
+	drawCyclinder(0.25, 0.15, 0.05);
+	glTranslatef(0, 0, 0.05);
+	drawCyclinder(0.15, 0, 0.02);
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(0, 0.3, 0);
-	gluSphere(quadric, 0.2, 30, 30);
+	glTranslatef(0, 0.13, 0);
+	glScalef(1, 0.3, 0.9);
+	drawSphere(0.25);
 	glPopMatrix();
 
-	gluDeleteQuadric(quadric);
+	eye();
 }
 
 void lighting() {
 
-	//glEnable(GL_LIGHTING);
+	if (isLightOn) {
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT1);
+	}
+	else {
+		glDisable(GL_LIGHTING);
+		glDisable(GL_LIGHT1);
+	}
+	
 
 	// White diffuse + ambient + specular light
-	GLfloat lightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // diffuse color
-	GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // soft ambient light
-	GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // shiny reflections
-	GLfloat lightPos[] = { x, y, z, 1.0f };          // position (1.0f = point light)
+	GLfloat lightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat lightAmbient[] = { 0.3f, 0.3f, 0.3f, 1.0f }; // soft white ambient
+	GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat lightPos[] = { x, y, z, 1.0f };         // point light
 
-	// Blue material with white highlights
-	GLfloat matDiffuse[] = { 0.0f, 0.0f, 1.0f, 1.0f }; // base color (blue)
-	GLfloat matAmbient[] = { 0.0f, 0.0f, 0.2f, 1.0f }; // darker ambient blue
-	GLfloat matSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // shiny white reflection
-	GLfloat matShininess[] = { 50.0f };                  // shininess [0–128]
+	GLfloat matSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // white highlight
+	GLfloat matShininess[] = { 32.0f };
 
 	// Let glColor3f() control the material color
 	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+
 	// Assign light properties
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDiffuse);
 	glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmbient);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpecular);
 	glLightfv(GL_LIGHT1, GL_POSITION, lightPos);
 
-	// Assign material properties
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, matShininess);
 
@@ -659,18 +841,27 @@ void lighting() {
 	gluDeleteQuadric(quadric);
 }
 
+void projection() {
+	if (perspective) {
+		gluPerspective(100.0, 1920.0 / 1080.0, 0.1, 10.0);
+	}
+	else {
+		glOrtho(-5.0, 5.0, -5.0, 5.0, 0.1, 100.0);
+	}
+
+	gluLookAt(pRy, pRx, -pRz,   // camera position
+		0.0, 0.0, 0.0,     // look at origin
+		0.0, 1.0, 0.0);
+	
+}
+
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	//gluPerspective(20, 20, 1, 50);
-	gluPerspective(100.0, 1920.0 / 1080.0, 0.1, 10.0);
-	gluLookAt(pRy, pRx, -pRz,   // camera position
-		0.0, 0.0, 0.0,     // look at origin
-		0.0, 1.0, 0.0);
-
+	projection();
 	lighting();
 
 	if(isWalking)
@@ -682,6 +873,7 @@ void display()
 		rightLegAngle = 0;
 	}
 
+	neck();
 	head();
 	arms();
 	body();

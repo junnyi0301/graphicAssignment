@@ -43,10 +43,10 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		else if (wParam == 'Q')
 			z -= moveSpeed;
 		else if (wParam == VK_UP) {
-			rotSpeed = +0.1f;
+			rotSpeed += 0.1f;
 		}
 		else if (wParam == VK_DOWN) {
-			rotSpeed = -0.1f;
+			rotSpeed -= 0.1f;
 		}
 		else if (wParam == VK_SPACE)
 			isLightOn = !isLightOn;
@@ -177,7 +177,11 @@ void display()
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();      // reset so last frame’s rotation doesn’t affect the light
+	rotAngle += rotSpeed;
+	glPushMatrix();
+	glRotatef(rotAngle, 1.0f, 1.0f, 1.0f);
 	lightning();           // place the (moving) light using x,y,z
+	glPopMatrix();
 
 	// REMOVE these 6 lines from your original display() (they overwrite the moving light):
 	// glLightfv(GL_LIGHT0, GL_AMBIENT, ambL);
@@ -188,8 +192,7 @@ void display()
 	// glEnable(GL_LIGHT1);
 
 	// Make Up/Down effective (fixed speed, direction set by keys)
-	rotAngle += rotSpeed;
-	glRotatef(rotAngle, 1.0f, 1.0f, 1.0f); // rotate about all axes
+	 // rotate about all axes
 
 	// Material (ensure diffuse is set so light is visible)
 	GLfloat ambMat4[] = { ambM[0], ambM[1], ambM[2], 1.0f };
