@@ -48,6 +48,9 @@
     <ClCompile Include="P7.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ASG.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="road.bmp">
@@ -66,6 +69,27 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="Brick.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Fabric.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="IceFrost.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="HotLava.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="RustMetal.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Banana.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Hair.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Chainmail.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

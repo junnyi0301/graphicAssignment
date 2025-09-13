@@ -124,6 +124,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ASG.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Assignment.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
@@ -159,11 +162,18 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Banana.bmp" />
     <Image Include="Box.bmp" />
     <Image Include="Brick.bmp" />
+    <Image Include="Chainmail.bmp" />
+    <Image Include="Fabric.bmp" />
+    <Image Include="Hair.bmp" />
+    <Image Include="HotLava.bmp" />
+    <Image Include="IceFrost.bmp" />
     <Image Include="Metal.bmp" />
     <Image Include="road.bmp" />
     <Image Include="roof.bmp" />
+    <Image Include="RustMetal.bmp" />
     <Image Include="stoneWall.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
