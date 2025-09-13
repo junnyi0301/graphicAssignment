@@ -6,10 +6,12 @@
 #include <string>
 #include <chrono>
 
+
 #pragma comment (lib, "OpenGL32.lib")
 
 #define WINDOW_TITLE "OpenGL Window"
 
+//Time
 auto lastTime = std::chrono::high_resolution_clock::now();
 
 //Menu
@@ -97,15 +99,27 @@ float fingerSpeed = 5; //Larger number faster speed
 
 
 float getDeltaTime() {
+	static auto lastTime = std::chrono::high_resolution_clock::now();
+
 	auto currentTime = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float> delta = currentTime - lastTime;
+	std::chrono::duration<float> elapsed = currentTime - lastTime;
+
+	float deltaTime = elapsed.count();
 	lastTime = currentTime;
-	return delta.count(); // seconds
+
+	// Clamp to avoid lag spikes
+	if (deltaTime > 0.05f) // ~20 FPS minimum
+		deltaTime = 0.05f;
+
+	return deltaTime;
 }
 
-float update(float angle, float speed) {
+void update() {
 	float dt = getDeltaTime();
-	return angle + speed * dt;
+
+	// Speeds tuned for visible effect
+	animationSpeed = 0.5 / dt;   // larger number slower animation
+	stepSpeed = 40 * dt;   // larger number faster animation
 }
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -227,10 +241,12 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		if (wParam == 0x39) {
 			clothesTextureIndex < 3 ? clothesTextureIndex += 1 : clothesTextureIndex = 0;
 			clothesTexture = clothesTextureList[clothesTextureIndex];
+			update();
 		}
 		else if (wParam == 0x38) {
 			weaponTextureIndex < 2 ? weaponTextureIndex += 1 : weaponTextureIndex = 0;
 			weaponTexture = weaponTextureList[weaponTextureIndex];
+			update();
 		}
 
 			
@@ -1658,12 +1674,12 @@ void flyAnimation() {
 
 	if (isFlying) {
 		if (elapsed < 0.5)
-			upperBodyPositionY > -0.05 ? upperBodyPositionY -= 0.05 / 10 : upperBodyPositionY = -0.05;
+			upperBodyPositionY > -0.05 ? upperBodyPositionY -= 0.05 / animationSpeed : upperBodyPositionY = -0.05;
 		else if (!floating) {
 			upperBodyPositionY = 0;
-			bodyPositionY < 1 ? bodyPositionY += 0.1 : bodyPositionY = 1;
-			leftBicep < 180 ? leftBicep += 180 / 10 : leftBicep = 180;
-			rightBicep < 180 ? rightBicep += 180 / 10 : rightBicep = 180;
+			bodyPositionY < 1 ? bodyPositionY += 1 / animationSpeed : bodyPositionY = 1;
+			leftBicep < 180 ? leftBicep += 180 / animationSpeed : leftBicep = 180;
+			rightBicep < 180 ? rightBicep += 180 / animationSpeed : rightBicep = 180;
 
 			if (bodyPositionY == 1) {
 				floating = true;
@@ -1671,9 +1687,9 @@ void flyAnimation() {
 		}
 
 		if (floating && !flyingDone) {
-			leftBicep > 0 ? leftBicep -= 180 / 10 : leftBicep = 0;
-			rightBicep > 0 ? rightBicep -= 180 / 10 : rightBicep = 0;
-			shardsSize < 1 ? shardsSize += 0.1 : shardsSize = 1;
+			leftBicep > 0 ? leftBicep -= 180 / animationSpeed : leftBicep = 0;
+			rightBicep > 0 ? rightBicep -= 180 / animationSpeed : rightBicep = 0;
+			shardsSize < 1 ? shardsSize += 1 / animationSpeed : shardsSize = 1;
 
 			if (shardsSize == 1)
 				flyingDone = true;
@@ -1681,20 +1697,20 @@ void flyAnimation() {
 
 		if (flyingDone) {
 			if(elapsed > 2 && elapsed < 4)
-				leftBicep < 180 ? leftBicep += 180 / 10 : leftBicep = 180;
+				leftBicep < 180 ? leftBicep += 180 / animationSpeed : leftBicep = 180;
 			if(shardsSize == 1 && elapsed > 3)
-				shardsRotation < 90 ? shardsRotation += 9 : shardsRotation = 90;
+				shardsRotation < 90 ? shardsRotation += 90 / animationSpeed : shardsRotation = 90;
 
 			if (elapsed > 4) {
-				shardsPosition > -5 ? shardsPosition -= 0.5 : shardsPosition = -5;
-				leftBicep > 90 ? leftBicep -= 90 / 10 : leftBicep = 90;
+				shardsPosition > -5 ? shardsPosition -= 5 / animationSpeed : shardsPosition = -5;
+				leftBicep > 90 ? leftBicep -= 90 / animationSpeed : leftBicep = 90;
 			}
 		}
 	}
 	else if (!isFlying && !flyingDone) {
-		bodyPositionY > 0 ? bodyPositionY -= 0.1 : bodyPositionY = 0;
-		shardsSize > 0 ? shardsSize -= 0.1 : shardsSize = 0;
-		leftBicep > 0 ? leftBicep -= 90 / 10 : leftBicep = 0;
+		bodyPositionY > 0 ? bodyPositionY -= 1 / animationSpeed : bodyPositionY = 0;
+		shardsSize > 0 ? shardsSize -= 1 / animationSpeed : shardsSize = 0;
+		leftBicep > 0 ? leftBicep -= 90 / animationSpeed : leftBicep = 0;
 		if (shardsSize == 0) {
 			shardsPosition = 0;
 			shardsRotation = 0;
@@ -1781,6 +1797,7 @@ void background() {
 
 void display()
 {
+	update();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.33f, 0.61f, 0.82f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
