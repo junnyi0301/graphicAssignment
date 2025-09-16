@@ -64,3 +64,24 @@ Animation
 Walking animation -- M
 Fighting animation -- N
 Flying animation -- B
+
+======================================================
+Texture & Weapons
+======================================================
+
+Change clothes texture -- 9
+Change weapon texture -- 8
+Change weapon -- V
+
+======================================================
+Background
+======================================================
+
+Change day or night -- C
+
+======================================================
+Others
+======================================================
+Reset -- Space bar
+
+
