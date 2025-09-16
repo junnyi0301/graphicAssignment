@@ -68,6 +68,9 @@ float maxArmAngle = 20.0f;
 float x = -1, y = 0.3, z = -1.2;
 bool isLightOn = true;
 
+//Weapon
+int weaponId = 1;
+
 //Weapon Animation
 float weaponPositionY = 0, weaponRotation = 0;
 bool fighting = false, fightingCharging = true, fightingDone = false;
@@ -83,8 +86,8 @@ float shardsRotation = 0, shardsPosition = 0, shardsSize;
 bool angry = false;
 
 //Texture
-LPCSTR clothesTextureList[] = {"", "Fabric.bmp", "Chainmail.bmp", "Banana.bmp" };
-LPCSTR weaponTextureList[] = {"", "IceFrost.bmp" , "HotLava.bmp" };
+LPCSTR clothesTextureList[] = { "", "Fabric.bmp", "Chainmail.bmp", "Banana.bmp" };
+LPCSTR weaponTextureList[] = { "", "IceFrost.bmp" , "HotLava.bmp" };
 LPCSTR clothesTexture = "";
 LPCSTR weaponTexture = "";
 LPCSTR hairTexture = "Hair.bmp";
@@ -96,6 +99,43 @@ float stepSpeed = 2; //Walking animation speed larger number faster animation
 float walkingSpeed = 0.5; //Larger number faster speed
 float armSpeed = 5; //Larger number faster speed
 float fingerSpeed = 5; //Larger number faster speed
+
+// -------- Background --------
+// ----- Clouds -----
+float gCloudOffset = 0.0f;   // scrolls clouds 
+
+// ----- Mountain -----
+float gMountainScale = 1.85f;
+float gMountainNearScale = 1.45f;  // near row relative scale
+float gMountainFarScale = 1.10f;  // far row relative scale
+float gMountainSpacing = 4.40f;  // spacing
+
+// Colour
+static const GLfloat NEAR_F[3] = { 0.12f, 0.44f, 0.47f };
+static const GLfloat NEAR_L[3] = { 0.08f, 0.34f, 0.39f };
+static const GLfloat NEAR_R[3] = { 0.18f, 0.56f, 0.54f };
+
+static const GLfloat FAR_F[3] = { 0.38f, 0.64f, 0.69f };
+static const GLfloat FAR_L[3] = { 0.32f, 0.55f, 0.62f };
+static const GLfloat FAR_R[3] = { 0.46f, 0.71f, 0.72f };
+
+// ----- Road and trees -----
+float gRoadHalfWidth = 1.25f;
+const float kTreeCharClearZ = 2.8f;
+const float kTreeRoadMargin = 0.35f;
+const float kTreeHorizonCullZ = 6.55f;
+
+// ----- Day/Night  -----
+bool gNight = false;  // false = day, true = night
+
+// Sky colors
+const GLfloat SKY_DAY[3] = { 0.33f, 0.61f, 0.82f };
+const GLfloat SKY_NIGHT[3] = { 0.03f, 0.06f, 0.12f };   // deep blue
+
+// Cloud colors
+const GLfloat CLOUD_DAY[3] = { 1.00f, 1.00f, 1.00f };
+const GLfloat CLOUD_NIGHT[3] = { 0.65f, 0.70f, 0.80f }; // dark
+
 
 
 float getDeltaTime() {
@@ -120,6 +160,10 @@ void update() {
 	// Speeds tuned for visible effect
 	animationSpeed = 0.5 / dt;   // larger number slower animation
 	stepSpeed = 40 * dt;   // larger number faster animation
+
+	// Clouds drift slowly to the right
+	gCloudOffset += 0.15f * dt;
+	if (gCloudOffset > 15.0f) gCloudOffset -= 15.0f;
 }
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -225,6 +269,13 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			isLightOn = !isLightOn;
 		}
 
+		//Weapon
+		if (wParam == 'V')
+			weaponId += 1;
+
+		if (weaponId >= 3)
+			weaponId = 1;
+
 		//Menu selection
 		if (wParam == 0x31)
 			menu = 1;
@@ -232,7 +283,7 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			menu = 2;
 		else if (wParam == 0x33)
 			menu = 3;
-		
+
 		//View
 		if (wParam == 0x34)
 			perspective = !perspective;
@@ -249,14 +300,14 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			update();
 		}
 
-			
+
 		//Body movement
 		if (wParam == 'P')
 			leftArmMovement = !leftArmMovement;
 		else if (wParam == 'O') {
 			smallArmMovement = !smallArmMovement;
 		}
-		
+
 		//Animation
 		if (wParam == 'B') { //Flying animation
 			isFlying = !isFlying;
@@ -270,7 +321,7 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 			fighting = !fighting;
 
-			if(fighting)
+			if (fighting)
 				fightingStartTime = std::chrono::high_resolution_clock::now();
 		}
 		else if (wParam == 'M') { //Walking animation
@@ -302,22 +353,22 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				part < 0 ? part += fingerSpeed : part = 0;
 		}
 		else {
-			if(wParam == 'G')
+			if (wParam == 'G')
 				indexAngle > -80 ? indexAngle -= fingerSpeed : indexAngle = -80;
-			if(wParam == 'H')
+			if (wParam == 'H')
 				middleAngle > -80 ? middleAngle -= fingerSpeed : middleAngle = -80;
-			if(wParam == 'J')
+			if (wParam == 'J')
 				ringAngle > -80 ? ringAngle -= fingerSpeed : ringAngle = -80;
-			if(wParam == 'K')
+			if (wParam == 'K')
 				pinkyAngle > -80 ? pinkyAngle -= fingerSpeed : pinkyAngle = -80;
 
-			if(wParam == 'T')
+			if (wParam == 'T')
 				indexAngle < 0 ? indexAngle += fingerSpeed : indexAngle = 0;
-			if(wParam == 'Y')
+			if (wParam == 'Y')
 				middleAngle < 0 ? middleAngle += fingerSpeed : middleAngle = 0;
-			if(wParam == 'U')
+			if (wParam == 'U')
 				ringAngle < 0 ? ringAngle += fingerSpeed : ringAngle = 0;
-			if(wParam == 'I')
+			if (wParam == 'I')
 				pinkyAngle < 0 ? pinkyAngle += fingerSpeed : pinkyAngle = 0;
 		}
 
@@ -344,7 +395,12 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			leftArmMovement ? leftHandRotation > handRotationMin ? leftHandRotation -= armSpeed : leftHandRotation = handRotationMin : rightHandRotation > handRotationMin ? rightHandRotation -= armSpeed : rightHandRotation = handRotationMin;
 		else if (wParam == VK_RIGHT)
 			leftArmMovement ? leftHandRotation < handRotationMax ? leftHandRotation += armSpeed : leftHandRotation = handRotationMax : rightHandRotation < handRotationMax ? rightHandRotation += armSpeed : rightHandRotation = handRotationMax;
-		
+
+		//Background Day or Night
+		if (wParam == 'C') {
+			gNight = !gNight;
+		}
+
 		if (wParam == VK_SPACE) {
 			theta = 0;
 			radius = 1;
@@ -375,6 +431,8 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			bodyRotation = 0;
 			camZ = 0;
 			camX = 0;
+			gNight = false;
+
 		}
 		break;
 	default:
@@ -521,13 +579,13 @@ void fingerPart() {
 // 1 Cyclinder
 
 void fingerTip() {
-	
+
 
 	glPushMatrix();
 	glScalef(0.8, 0.8, 0.8);
 	drawSphere(0.02);
 	glPopMatrix();
-	
+
 }
 //1 Sphere
 
@@ -566,9 +624,9 @@ void finger(bool left, float fingerAngle) {
 	fingerTip();
 	glPopMatrix();
 
-	
 
-	
+
+
 }
 // 3 FingerPart, 3 FingerTip
 
@@ -630,7 +688,7 @@ void palm() {
 void fingers(bool left) {
 
 	glPushMatrix();
-	glScalef(0.8,0.6,1);
+	glScalef(0.8, 0.6, 1);
 	//Pinky finger
 	glPushMatrix();
 	if (left) {
@@ -710,17 +768,17 @@ void sleeve(bool left) {
 	drawCyclinder(0.4, 0.7, 0.4, clothesTexture);
 	glRotatef(180, 1, 0, 0);
 	drawCyclinder(0.4, 0.4, 0.05, clothesTexture);
-	glTranslatef(0,0,0.05);
+	glTranslatef(0, 0, 0.05);
 	drawCyclinder(0.4, 0.3, 0.05, clothesTexture);
-	glTranslatef(0,0,0.05);
+	glTranslatef(0, 0, 0.05);
 	drawCyclinder(0.3, 0.2, 0.025, clothesTexture);
-	glTranslatef(0,0,0.025);
+	glTranslatef(0, 0, 0.025);
 	drawCyclinder(0.2, 0.0, 0.02, clothesTexture);
 	glPopMatrix();
 }
 // 5 Cyclinders
 
-void weapon() {
+void weapon1() {
 	GLUquadricObj* quadric = NULL;
 	quadric = gluNewQuadric();
 	glEnable(GL_POLYGON_OFFSET_FILL);
@@ -786,6 +844,168 @@ void weapon() {
 }
 // 6 Cyclinders
 
+void weapon2() {
+	GLUquadricObj* quadric = gluNewQuadric();
+
+	const float yBase = 0.25f;
+	const float handleH = 1.60f;
+	const float ferruleH = 0.12f;
+	const float crossbarW = 0.24f;
+	const float stemH = 0.18f;
+	const float tipH = 0.24f;
+	const float centerShaftH = 0.22f;
+	const float centerTipH = 0.28f;
+	const float sideX = 0.12f;
+
+	const float yHandleTop = 0.2;
+	const float yFerruleTop = yHandleTop + ferruleH;
+
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0, 1.0);
+
+	glPushMatrix();
+
+	//Handle
+	glColor3f(0.00f, 0.77f, 1.00f);
+	glPushMatrix();
+	glTranslatef(0.0f, yBase, 0.0f);
+	glRotatef(90.0f, 1, 0, 0);
+	drawCyclinder(0.012f, 0.012f, handleH);
+	glPopMatrix();
+
+	glPushMatrix();
+
+	glTranslatef(0.0f, 0.0f, 0.0f);
+
+	//Ferrule
+	glColor3f(0.80f, 0.80f, 0.00f);
+	glPushMatrix();
+	glTranslatef(0.0f, yHandleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	drawCyclinder(0.018f, 0.028f, ferruleH);
+	glPopMatrix();
+
+	//Crossbar
+	glColor3f(0.65f, 0.65f, 0.70f);
+	glPushMatrix();
+	glTranslatef(-0.1f, yFerruleTop, 0.0f);
+	glRotatef(90.0f, 0, 1, 0);
+	drawCyclinder(0.010f, 0.010f, crossbarW);
+	glPopMatrix();
+
+	//Metal colour for prongs
+	if (weaponTextureIndex == 0) glColor3f(0.00f, 0.77f, 1.00f);
+	else                         glColor3f(1.00f, 1.00f, 1.00f);
+
+	//Center prong
+	// Shaft
+	glPushMatrix();
+	glTranslatef(0.0f, yFerruleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	drawCyclinder(0.020f, 0.015f, centerShaftH, weaponTexture);
+	glPopMatrix();
+	//Tip
+	glPushMatrix();
+	glTranslatef(0.0f, yFerruleTop + centerShaftH, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	drawCyclinder(0.030f, 0.0f, centerTipH, weaponTexture);
+	glPopMatrix();
+
+	//Side prongs
+	//Left stem
+	glPushMatrix();
+	glTranslatef(-sideX, yFerruleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	drawCyclinder(0.016f, 0.013f, stemH, weaponTexture);
+	glPopMatrix();
+	//Left tip
+	glPushMatrix();
+	glTranslatef(-sideX, yFerruleTop + stemH, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	drawCyclinder(0.026f, 0.0f, tipH, weaponTexture);
+	glPopMatrix();
+
+	//Right stem
+	glPushMatrix();
+	glTranslatef(sideX, yFerruleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	drawCyclinder(0.016f, 0.013f, stemH, weaponTexture);
+	glPopMatrix();
+	//Right tip
+	glPushMatrix();
+	glTranslatef(sideX, yFerruleTop + stemH, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	drawCyclinder(0.026f, 0.0f, tipH, weaponTexture);
+	glPopMatrix();
+
+	glPopMatrix();
+
+	glDisable(GL_POLYGON_OFFSET_FILL);
+
+	//Wireframe outline
+	glLineWidth(3.0f);
+	if (weaponTextureIndex == 0) glColor3f(0.00f, 0.67f, 0.80f);
+	else                         glColor3f(0.00f, 0.00f, 0.00f);
+
+	gluQuadricDrawStyle(quadric, GLU_LINE);
+
+	//Handle
+	glPushMatrix();
+	glTranslatef(0.0f, yBase, 0.0f);
+	glRotatef(90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.012, 0.012, handleH, 8, 1);
+	glPopMatrix();
+	//Ferrule
+	glPushMatrix();
+	glTranslatef(0.0f, yHandleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.018, 0.028, ferruleH, 10, 1);
+	glPopMatrix();
+	//Crossbar
+	glPushMatrix();
+	glTranslatef(-0.1f, yFerruleTop, 0.0f);
+	glRotatef(90.0f, 0, 1, 0);
+	gluCylinder(quadric, 0.010, 0.010, crossbarW, 10, 1);
+	glPopMatrix();
+	//Center prong
+	glPushMatrix();
+	glTranslatef(0.0f, yFerruleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.020, 0.015, centerShaftH, 8, 1);
+	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(0.0f, yFerruleTop + centerShaftH, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.030, 0.0, centerTipH, 8, 1);
+	glPopMatrix();
+	//Left prong
+	glPushMatrix();
+	glTranslatef(-sideX, yFerruleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.016, 0.013, stemH, 8, 1);
+	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(-sideX, yFerruleTop + stemH, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.026, 0.0, tipH, 8, 1);
+	glPopMatrix();
+	//Right prong
+	glPushMatrix();
+	glTranslatef(sideX, yFerruleTop, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.016, 0.013, stemH, 8, 1);
+	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(sideX, yFerruleTop + stemH, 0.0f);
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(quadric, 0.026, 0.0, tipH, 8, 1);
+	glPopMatrix();
+
+	gluDeleteQuadric(quadric);
+	glPopMatrix();
+}
+// 18 Cyclinders
+
 void fightingAnimation() {
 	auto now = std::chrono::high_resolution_clock::now();
 	float elapsed = std::chrono::duration<float>(now - fightingStartTime).count();
@@ -795,7 +1015,7 @@ void fightingAnimation() {
 
 	if (elapsed > 0.5)
 		angry = true;
-	
+
 	if (!fightingCharging && elapsed >= 3)
 		fightingDone = true;
 
@@ -823,7 +1043,7 @@ void fightingAnimation() {
 
 void arm(bool left) {
 
-	if(fighting)
+	if (fighting)
 		fightingAnimation();
 
 	glColor3f(0.9, 0.9, 0.9);
@@ -871,7 +1091,12 @@ void arm(bool left) {
 		glRotatef(92, 0, 0, 1);
 		glRotatef(weaponRotation, 0, 0, 1);
 		glTranslatef(0, weaponPositionY, 0);
-		weapon();
+		if (weaponId == 1)
+			weapon1();
+		else if (weaponId == 2)
+			weapon2();
+		else
+			weapon1;
 	}
 	glPopMatrix();
 }
@@ -894,7 +1119,7 @@ void arms() {
 	glTranslatef(0.3, 0, 0);
 	glColor3f(0.97, 0.97, 0.8);
 	glPushMatrix();
-	glScalef(1,1,0.9);
+	glScalef(1, 1, 0.9);
 	drawSphere(0.05);
 	glPopMatrix();
 	glRotatef(rightArmAngle, 1, 0, 0);
@@ -908,11 +1133,11 @@ void arms() {
 void torso() {
 	//Chest
 	glColor3f(0.9, 0.9, 0.9);
-	glColor3f(1,1,1);
+	glColor3f(1, 1, 1);
 	glPushMatrix();
 	glTranslatef(0, -0.05, 0);
 	glRotatef(90, 1, 0, 0);
-	glScalef(1,0.7,1);
+	glScalef(1, 0.7, 1);
 	drawCyclinder(0.25, 0.23, 0.25, clothesTexture);
 	glPopMatrix();
 
@@ -928,7 +1153,7 @@ void torso() {
 	//Lower
 	glColor3f(0.9, 0.9, 0.9);
 	glPushMatrix();
-	glTranslatef(0,-0.35,0);
+	glTranslatef(0, -0.35, 0);
 	glRotatef(90, 1, 0, 0);
 	glScalef(1, 0.7, 1);
 	drawCyclinder(0.23, 0.35, 0.45, clothesTexture);
@@ -1064,12 +1289,12 @@ void feet() {
 void neck() {
 	glColor3f(0.97, 0.97, 0.8);
 	glPushMatrix();
-	glRotatef(90,1,0,0);
-	glScalef(1.2,0.9,1);
+	glRotatef(90, 1, 0, 0);
+	glScalef(1.2, 0.9, 1);
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(0,-0.02,0);
+	glTranslatef(0, -0.02, 0);
 	glRotatef(-90, 1, 0, 0);
 	glPushMatrix();
 	glScalef(1.2, 0.7, 1);
@@ -1077,13 +1302,13 @@ void neck() {
 	glRotatef(180, 1, 0, 0);
 	drawCyclinder(0.21, 0.2, 0.02);
 	glPopMatrix();
-	drawCyclinder(0.18,0.1,0.02);
+	drawCyclinder(0.18, 0.1, 0.02);
 	glTranslatef(0, 0, 0.02);
-	drawCyclinder(0.1,0.08,0.02);
-	glTranslatef(0,0,0.02);
-	drawCyclinder(0.08,0.08,0.02);
-	glTranslatef(0,0,0.02);
-	drawCyclinder(0.08,0.1,0.02);
+	drawCyclinder(0.1, 0.08, 0.02);
+	glTranslatef(0, 0, 0.02);
+	drawCyclinder(0.08, 0.08, 0.02);
+	glTranslatef(0, 0, 0.02);
+	drawCyclinder(0.08, 0.1, 0.02);
 	glPopMatrix();
 }
 // 5 Cyclinder
@@ -1091,10 +1316,10 @@ void neck() {
 void eye() {
 	glColor3f(1, 1, 1);
 	glPushMatrix();
-	glTranslatef(0.085,0.25,-0.3);
+	glTranslatef(0.085, 0.25, -0.3);
 	glRotatef(180, 0, 0, 1);
 	glRotatef(17, 0, 1, 0);
-	glScalef(0.2,0.25,1);
+	glScalef(0.2, 0.25, 1);
 	drawCircle(0.2);
 	drawCyclinder(0.2, 0.2, 0.1);
 	glColor3f(0, 0, 0);
@@ -1111,10 +1336,10 @@ void eye() {
 
 	glColor3f(1, 1, 1);
 	glPushMatrix();
-	glTranslatef(-0.085,0.25,-0.3);
+	glTranslatef(-0.085, 0.25, -0.3);
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-17, 0, 1, 0);
-	glScalef(0.2,0.25,1);
+	glScalef(0.2, 0.25, 1);
 	drawCircle(0.2);
 	drawCyclinder(0.2, 0.2, 0.1);
 	glColor3f(0, 0, 0);
@@ -1137,25 +1362,25 @@ void cheeks() {
 	glPushMatrix();
 	glTranslatef(0.12, 0.18, -0.28);
 	glRotatef(-20, 0, 1, 0);
-	glScalef(0.5,0.3,1);
+	glScalef(0.5, 0.3, 1);
 	drawCircle(0.1);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(-0.12, 0.18, -0.28);
 	glRotatef(20, 0, 1, 0);
-	glScalef(0.5,0.3,1);
+	glScalef(0.5, 0.3, 1);
 	drawCircle(0.1);
 	glPopMatrix();
 }
 // 2 Triangle fan
 
 void mouth() {
-	glColor3f(0,0,0);
+	glColor3f(0, 0, 0);
 	glPushMatrix();
 	glTranslatef(0, 0.14, -0.31);
-	glScalef(0.6,0.1,1);
-	glRotatef(angry ? 180 : 0,0,0,1);
+	glScalef(0.6, 0.1, 1);
+	glRotatef(angry ? 180 : 0, 0, 0, 1);
 	drawCircle(0.05, -180, false);
 	glPopMatrix();
 }
@@ -1183,8 +1408,8 @@ void hairStrand(double length) {
 	glEnd();
 
 	glPushMatrix();
-	glTranslatef(0,0,-0.05);
-	glScalef(1,1,0.73);
+	glTranslatef(0, 0, -0.05);
+	glScalef(1, 1, 0.73);
 	hairMiddlePart();
 	for (int x = 0; x < length; x++) {
 		glTranslatef(0, 0, -0.05);
@@ -1385,13 +1610,13 @@ void hair() {
 void ear(bool left) { //Neko ears
 	glColor3f(0.97, 0.97, 0.8);
 	glPushMatrix();
-	glTranslatef(0,0.5,-0.25);
-	glRotatef(left ? 40 : -40,0,0,1);
+	glTranslatef(0, 0.5, -0.25);
+	glRotatef(left ? 40 : -40, 0, 0, 1);
 	glScalef(0.9, 0.9, 1);
 	glBegin(GL_TRIANGLES);
-	glVertex3f(0,0.2,0);
-	glVertex3f(0.1,0,0);
-	glVertex3f(-0.1,0,0);
+	glVertex3f(0, 0.2, 0);
+	glVertex3f(0.1, 0, 0);
+	glVertex3f(-0.1, 0, 0);
 	glEnd();
 
 	glColor3f(0.8, 0.4, 0.4);
@@ -1399,17 +1624,17 @@ void ear(bool left) { //Neko ears
 	glTranslatef(0, 0, -0.001);
 	glScalef(0.9, 0.7, 1);
 	glBegin(GL_TRIANGLES);
-	glVertex3f(0,0.2,0);
-	glVertex3f(0.1,0,0);
-	glVertex3f(-0.1,0,0);
+	glVertex3f(0, 0.2, 0);
+	glVertex3f(0.1, 0, 0);
+	glVertex3f(-0.1, 0, 0);
 	glEnd();
 	glPopMatrix();
 
 	glColor3f(0.97, 0.97, 0.8);
 	glBegin(GL_TRIANGLE_FAN);
-	glVertex3f(0,0.2,0);
-	glVertex3f(0.1,0,0);
-	glVertex3f(0,0,0.4);
+	glVertex3f(0, 0.2, 0);
+	glVertex3f(0.1, 0, 0);
+	glVertex3f(0, 0, 0.4);
 	glVertex3f(-0.1, 0, 0);
 	glEnd();
 	glPopMatrix();
@@ -1418,12 +1643,12 @@ void ear(bool left) { //Neko ears
 
 void ears() {
 	glPushMatrix();
-	glTranslatef(-0.15,0,0);
+	glTranslatef(-0.15, 0, 0);
 	ear(true);
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(0.15,0,0);
+	glTranslatef(0.15, 0, 0);
 	ear(false);
 	glPopMatrix();
 }
@@ -1553,7 +1778,7 @@ void diamond() {
 	glVertex3f(0, -0.3, 0);
 	glEnd();
 
-	
+
 	glPopMatrix();
 }
 // 2 Triangle strip, 6 line loop
@@ -1562,7 +1787,7 @@ void iceCore() {
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(1.0, 1.0);
 	glPushMatrix();
-	glTranslatef(0,0,-0.02);
+	glTranslatef(0, 0, -0.02);
 	drawHexagon(0.1);
 	glPopMatrix();
 
@@ -1572,10 +1797,10 @@ void iceCore() {
 	glPopMatrix();
 
 	glBegin(GL_QUAD_STRIP);
-	glVertex3f(-0.05,0.085,0.02);
-	glVertex3f(-0.05,0.085,-0.02);
+	glVertex3f(-0.05, 0.085, 0.02);
+	glVertex3f(-0.05, 0.085, -0.02);
 	glVertex3f(0.05, 0.085, 0.02);
-	glVertex3f(0.05,0.085,-0.02);
+	glVertex3f(0.05, 0.085, -0.02);
 	glVertex3f(0.1, 0, 0.02);
 	glVertex3f(0.1, 0, -0.02);
 	glVertex3f(0.05, -0.085, 0.02);
@@ -1620,11 +1845,11 @@ void iceEntity(int num) {
 	glScalef(0.6, 0.6, 0.6);
 	iceCore();
 	glPopMatrix();
-	
+
 	for (int x = 0; x < num; x++) {
 		glColor3f(0.8f, 0.95f, 1.0f);
 		glPushMatrix();
-		glRotatef((360/num) * x, 0, 0, 1);
+		glRotatef((360 / num) * x, 0, 0, 1);
 		glTranslatef(0, 0.15, 0);
 		glRotatef(shardsRotation, 1, 0, 0);
 		glTranslatef(0, shardsPosition, 0);
@@ -1696,9 +1921,9 @@ void flyAnimation() {
 		}
 
 		if (flyingDone) {
-			if(elapsed > 2 && elapsed < 4)
+			if (elapsed > 2 && elapsed < 4)
 				leftBicep < 180 ? leftBicep += 180 / animationSpeed : leftBicep = 180;
-			if(shardsSize == 1 && elapsed > 3)
+			if (shardsSize == 1 && elapsed > 3)
 				shardsRotation < 90 ? shardsRotation += 90 / animationSpeed : shardsRotation = 90;
 
 			if (elapsed > 4) {
@@ -1729,13 +1954,13 @@ void lighting() {
 		glDisable(GL_LIGHTING);
 		glDisable(GL_LIGHT1);
 	}
-	
+
 
 	// White diffuse + ambient + specular light
 	GLfloat lightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 	GLfloat lightSpecular[] = { 0.3f, 0.3f, 0.3f, 0.3f };
 	GLfloat lightAmbient[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-	GLfloat lightPos[] = { x, y, z, 0};       // point light
+	GLfloat lightPos[] = { x, y, z, 0 };       // point light
 
 	GLfloat matSpecular[] = { 0.3, 0.3, 0.3, 1 }; // white highlight
 	GLfloat matShininess[] = { 5 };  // much softer highlight
@@ -1785,7 +2010,8 @@ void projection() {
 	}
 }
 
-void background() {
+// -------- BackGround -------- 
+void ground() {
 	glColor3f(0, 0.7, 0);
 	glBegin(GL_QUADS);
 	glVertex3f(8, 0, -8);
@@ -1794,12 +2020,211 @@ void background() {
 	glVertex3f(8, 0, 8);
 	glEnd();
 }
+// quad = 1
+
+// ----- Clouds -----
+static void drawCloud(float scale = 1.0f) {
+	glPushMatrix();
+	glScalef(scale, scale, scale);
+
+	// turn off lighting
+	GLboolean lit = glIsEnabled(GL_LIGHTING);
+	if (lit) glDisable(GL_LIGHTING);
+	const GLfloat* cc = gNight ? CLOUD_NIGHT : CLOUD_DAY; glColor3f(cc[0], cc[1], cc[2]);
+
+	// core
+	drawSphere(0.13f);
+	// surrounding
+	glPushMatrix(); glTranslatef(0.18f, 0.02f, 0.00f); drawSphere(0.11f); glPopMatrix();
+	glPushMatrix(); glTranslatef(-0.18f, 0.02f, 0.00f); drawSphere(0.11f); glPopMatrix();
+	glPushMatrix(); glTranslatef(0.10f, -0.03f, 0.10f); drawSphere(0.09f); glPopMatrix();
+	glPushMatrix(); glTranslatef(-0.12f, -0.03f, -0.10f); drawSphere(0.09f); glPopMatrix();
+	glPushMatrix(); glTranslatef(0.00f, 0.06f, 0.00f); drawSphere(0.10f); glPopMatrix();
+
+	if (lit) glEnable(GL_LIGHTING);
+	glPopMatrix();
+}
+
+static void drawSkyClouds() {
+	GLboolean lit = glIsEnabled(GL_LIGHTING);
+	GLboolean ztst = glIsEnabled(GL_DEPTH_TEST);
+	if (lit)  glDisable(GL_LIGHTING);
+	if (ztst) glDisable(GL_DEPTH_TEST);
+
+	glPushMatrix();
+
+	// Height
+	const float Y = 2.6f;
+
+	//5 rows across Z
+	const float rowZ[5] = { -7.0f, -3.5f, 0.0f, 3.5f, 7.0f };
+	const float colX[5] = { -7.0f, -3.5f, 0.0f, 3.5f, 7.0f };
+	const float WRAP = 15.0f;
+
+	for (int r = 0; r < 5; ++r) {
+		const float speed = (r == 2 ? 1.0f : (r < 2 ? 0.8f : 0.6f));
+		float xOffset = fmodf(gCloudOffset * speed, WRAP);
+
+		for (int c = 0; c < 5; ++c) {
+			float x = colX[c] + xOffset;
+			if (x > WRAP * 0.5f) x -= WRAP;
+			if (x < -WRAP * 0.5f) x += WRAP;
+
+			glPushMatrix();
+			glTranslatef(x, Y + (r == 2 ? 0.0f : (r < 2 ? 0.15f : -0.10f)), rowZ[r]);
+			float s = 1.15f + 0.06f * ((r + c) % 3);
+			glScalef(s, s, s);
+			drawCloud(1.0f);
+			glPopMatrix();
+		}
+	}
+
+	glPopMatrix();
+
+	if (ztst) glEnable(GL_DEPTH_TEST);
+	if (lit)  glEnable(GL_LIGHTING);
+}
+// sphere = 150
+
+// ----- Mountains -----
+static void drawMountain(float halfW, float depth, float height, const GLfloat cFront[3], const GLfloat cLeft[3], const GLfloat cRight[3]) {
+	glBegin(GL_TRIANGLES);
+	// Front face
+	glColor3fv(cFront);
+	glVertex3f(-halfW, 0.0f, 0.0f);
+	glVertex3f(halfW, 0.0f, 0.0f);
+	glVertex3f(0.0f, height, -0.5f * depth);
+	// Left face
+	glColor3fv(cLeft);
+	glVertex3f(-halfW, 0.0f, 0.0f);
+	glVertex3f(-halfW, 0.0f, -depth);
+	glVertex3f(0.0f, height, -0.5f * depth);
+	// Right face
+	glColor3fv(cRight);
+	glVertex3f(halfW, 0.0f, 0.0f);
+	glVertex3f(halfW, 0.0f, -depth);
+	glVertex3f(0.0f, height, -0.5f * depth);
+	glEnd();
+}
+
+static void drawLowPolyMountainsBehind() {
+	const float GROUND_Y = -0.909f;
+	const float Z = 8.2f;
+	const float STEP = 2.4f;      // spacing between
+	const float LEFT = -14.0f;
+	const float RIGHT = 14.0f;
+	const float SCALE = 1.60f;     // overall size
+
+	GLboolean wasLit = glIsEnabled(GL_LIGHTING);
+	GLboolean wasTex = glIsEnabled(GL_TEXTURE_2D);
+	GLint oldShade; glGetIntegerv(GL_SHADE_MODEL, &oldShade);
+	if (wasLit) glDisable(GL_LIGHTING);
+	if (wasTex) glDisable(GL_TEXTURE_2D);
+	glShadeModel(GL_FLAT);
+
+	extern float camX;                      // follows camera
+	const float phase = fmodf(camX, STEP);
+
+	extern const GLfloat NEAR_F[3], NEAR_L[3], NEAR_R[3];
+
+	for (float x = LEFT - phase; x <= RIGHT - phase; x += STEP) {
+		int cell = (int)floorf((x + phase) / STEP);
+		float t = 0.5f + 0.5f * sinf(cell * 3.1f);   // 0..1
+
+		float halfW = (1.30f + 0.50f * t) * SCALE;
+		float depth = (0.85f + 0.20f * (1.0f - t)) * SCALE;
+		float h = (1.25f + 0.70f * t) * SCALE;
+
+		glPushMatrix();
+		glTranslatef(x, GROUND_Y, Z);
+		drawMountain(halfW, depth, h, NEAR_F, NEAR_L, NEAR_R);
+		glPopMatrix();
+	}
+
+	// restore state
+	glShadeModel(oldShade);
+	if (wasTex) glEnable(GL_TEXTURE_2D);
+	if (wasLit) glEnable(GL_LIGHTING);
+}
+// triangles = 36
+
+// ----- Road & Trees -----
+static void Road() {
+	const float Y = -0.905f;
+	const float Z1 = -7.6f;
+	const float Z2 = 7.6f;
+	const float HALF_W = 1.25f;
+
+	GLboolean lit = glIsEnabled(GL_LIGHTING);
+	if (lit) glDisable(GL_LIGHTING);
+
+	glColor3f(0.91f, 0.80f, 0.36f);      // yellow
+	glBegin(GL_QUADS);
+	glVertex3f(-HALF_W, Y, Z1); glVertex3f(HALF_W, Y, Z1);
+	glVertex3f(HALF_W, Y, Z2); glVertex3f(-HALF_W, Y, Z2);
+	glEnd();
+
+	if (lit) glEnable(GL_LIGHTING);
+}
+// quad = 1
+
+static void drawTree(float trunkH, float trunkR, float crownR) {
+	const float GROUND_Y = -0.91f;
+
+	GLUquadric* q = gluNewQuadric();
+
+	glPushMatrix();
+	glTranslatef(0.0f, GROUND_Y, 0.0f);
+
+	// Trunk
+	glColor3f(0.45f, 0.30f, 0.16f);
+	glPushMatrix();
+	glRotatef(-90.0f, 1, 0, 0);
+	gluCylinder(q, trunkR, trunkR * 0.9f, trunkH, 14, 1);
+	glPopMatrix();
+
+	// Leafy crown (3–4 overlapping spheres)
+	glTranslatef(0.0f, trunkH, 0.0f);
+	glColor3f(0.10f, 0.55f, 0.25f);  drawSphere(crownR);
+	glColor3f(0.12f, 0.60f, 0.28f);  glPushMatrix(); glTranslatef(-crownR * 0.60f, -crownR * 0.15f, crownR * 0.25f); drawSphere(crownR * 0.75f); glPopMatrix();
+	glColor3f(0.09f, 0.50f, 0.23f);  glPushMatrix(); glTranslatef(crownR * 0.60f, -crownR * 0.10f, -crownR * 0.20f); drawSphere(crownR * 0.70f); glPopMatrix();
+	glColor3f(0.08f, 0.48f, 0.22f);  glPushMatrix(); glTranslatef(0.0f, crownR * 0.50f, 0.0f);          drawSphere(crownR * 0.60f); glPopMatrix();
+
+	gluDeleteQuadric(q);
+	glPopMatrix();
+}
+
+struct TreePos { float x, z, s; };
+static const TreePos kTrees[] = {
+	// Left side
+	{-3.4f,-7.0f,1.00f}, {-4.8f,-5.6f,1.10f}, {-6.4f,-4.4f,0.95f}, {-5.2f,-3.2f,1.10f},
+	{-3.6f, 2.8f,1.00f}, {-5.0f, 3.8f,1.15f}, {-6.6f, 5.2f,1.00f},
+	// Right side
+	{ 3.4f,-7.0f,1.00f}, { 4.8f,-5.6f,1.10f}, { 6.4f,-4.4f,0.95f}, { 5.2f,-3.2f,1.10f},
+	{ 3.6f, 2.8f,1.00f}, { 5.0f, 3.8f,1.15f}, { 6.6f, 5.2f,1.00f}
+};
+static const int kTreeCount = sizeof(kTrees) / sizeof(kTrees[0]);
+
+static void drawRoadsideTrees() {
+	for (int i = 0; i < kTreeCount; ++i) {
+		const float x = kTrees[i].x;
+		const float z = kTrees[i].z;
+		const float s = kTrees[i].s;
+
+		glPushMatrix();
+		glTranslatef(x, 0.0f, z);
+		drawTree(1.65f * s, 0.11f * s, 0.48f * s);
+		glPopMatrix();
+	}
+}
+// cylinders = 14, spheres = 56
+
 
 void display()
 {
 	update();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.33f, 0.61f, 0.82f, 1.0f);
+	glClearColor(gNight ? SKY_NIGHT[0] : SKY_DAY[0], gNight ? SKY_NIGHT[1] : SKY_DAY[1], gNight ? SKY_NIGHT[2] : SKY_DAY[2], 1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glMatrixMode(GL_PROJECTION);
 	glEnable(GL_TEXTURE_2D);
@@ -1808,7 +2233,11 @@ void display()
 	projection();
 	lighting();
 
-	if(isWalking)
+	drawSkyClouds();
+	drawLowPolyMountainsBehind();
+
+
+	if (isWalking)
 		updateWalk();
 
 	flyAnimation();
@@ -1817,7 +2246,7 @@ void display()
 	glTranslatef(bodyPositionX, bodyPositionY, bodyPositionZ);
 	glRotatef(bodyRotation, 0, 1, 0);
 	glPushMatrix();
-	glTranslatef(0,upperBodyPositionY,0);
+	glTranslatef(0, upperBodyPositionY, 0);
 	neck();
 	head();
 	arms();
@@ -1828,9 +2257,12 @@ void display()
 	glPopMatrix();
 
 	glPushMatrix();
-	glTranslatef(0,-0.91,0);
-	background();
+	glTranslatef(0, -0.91, 0);
+	ground();
 	glPopMatrix();
+
+	Road();
+	drawRoadsideTrees();
 }
 //--------------------------------------------------------------------
 
