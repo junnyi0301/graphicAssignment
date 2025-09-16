@@ -26,7 +26,7 @@ float theta = 0.0f;
 float phi = 0.0f;
 float camX = 0, camY = 0, camZ = 0;
 float ptx = 0, pty = 0, pRy = 0, pRx = 0, pRz = 0;
-float oRx = 0;
+float oRx = 0, oRy = 0;
 bool perspective = true;
 
 //Object movement
@@ -186,9 +186,9 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			else if (wParam == 'D')
 				perspective ? theta -= walkingSpeed : oRx -= walkingSpeed;
 			else if (wParam == 'W')
-				phi += walkingSpeed;
+				perspective ? phi += walkingSpeed : oRy += walkingSpeed;
 			else if (wParam == 'S')
-				phi -= walkingSpeed;
+				perspective ? phi -= walkingSpeed : oRy -= walkingSpeed;
 			else if (wParam == 'E')
 				radius -= walkingSpeed;
 			else if (wParam == 'Q')
@@ -2004,7 +2004,7 @@ void projection() {
 		glOrtho(-4.445, 4.445, -2.5, 2.5, 0.1, 100.0);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		gluLookAt(oRx, 0, -1,   // camera position
+		gluLookAt(oRx, oRy, -1,   // camera position
 			0.0, 0.0, 0.0,     // look at origin
 			0.0, 1.0, 0.0);
 	}
